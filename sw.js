@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impostor-v1';
+const CACHE_NAME = 'impostor-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -17,29 +17,28 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    // ignoreSearch: true ensures that requests like /?v=3 or /?utm_source=pwa 
+    // still match the cached '/' or '/index.html'
+    caches.match(event.request, { ignoreSearch: true })
       .then((response) => {
         // Return cache hit if found
         if (response) {
           return response;
         }
-        // Clone the request because it's a one-time use stream
+        
+        // Network fallback
         const fetchRequest = event.request.clone();
 
         return fetch(fetchRequest).then(
           (response) => {
-            // Check if we received a valid response
             if(!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
-            // Clone the response because it's a one-time use stream
             const responseToCache = response.clone();
 
             caches.open(CACHE_NAME)
               .then((cache) => {
-                // Don't cache API calls or external extensions if strictly local, 
-                // but generally for a simple PWA we cache GET requests.
                 if (event.request.method === 'GET') {
                     cache.put(event.request, responseToCache);
                 }
