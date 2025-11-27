@@ -1,0 +1,5 @@
+{
+  "name": "Impostor Game",
+  "description": "A social deduction party game where players pass the phone to reveal their secret identity or word. Features AI-generated famous figures or custom user inputs.",
+  "requestFramePermissions": []
+}
