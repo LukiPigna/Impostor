@@ -1,8 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { SupportedLanguage } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 // Much larger fallback database ("Agranda la base de datos")
 const BACKUPS = [
   // Global Icons
@@ -25,6 +23,18 @@ const BACKUPS = [
 
 export const generateFamousPerson = async (language: SupportedLanguage = 'en'): Promise<string> => {
   try {
+    // Lazy initialization: Check environment only when function is called.
+    // This prevents the "process is not defined" crash on app load if the env var is missing.
+    const apiKey = process.env.API_KEY;
+
+    if (!apiKey) {
+        console.warn("Gemini API Key is missing. Using offline backup database.");
+        return getRandomBackup();
+    }
+
+    // Initialize only if key exists
+    const ai = new GoogleGenAI({ apiKey });
+
     const langPrompt = language === 'es' ? 'Spanish' : 'English';
     const contextPrompt = language === 'es' 
       ? "Genera el nombre de una persona famosa (real o ficticia) muy conocida por hablantes de español."
@@ -39,6 +49,7 @@ export const generateFamousPerson = async (language: SupportedLanguage = 'en'): 
     return text ? text.trim().replace(/['"]+/g, '') : getRandomBackup();
   } catch (error) {
     console.error("Error generating famous person:", error);
+    // Graceful fallback so the game continues even if API fails
     return getRandomBackup();
   }
 };

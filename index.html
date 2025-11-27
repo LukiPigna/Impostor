@@ -5,6 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="https://vitejs.dev/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Impostor Game</title>
+    <script>
+      // CRITICAL FIX FOR VERCEL/PRODUCTION:
+      // Defines a safe 'process.env' object in the browser to prevent "ReferenceError: process is not defined"
+      // when accessing process.env.API_KEY in the client code.
+      window.process = window.process || { env: {} };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
