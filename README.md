@@ -16,12 +16,12 @@ I built this web application to fill that gap, adding a touch of modern engineer
 
 ##  Key Features
 
--   ** AI-Powered:** Uses Google Gemini API to generate infinite, culturally relevant famous figures (never run out of topics).
--   ** Flexible Gameplay:** Choose between **Single Impostor** or **Multiple Impostors** for larger groups.
--   ** Custom Mode:** Players can input their own words/names for a personalized experience.
--   ** Bilingual:** Full support for **English** and **Spanish** (UI & AI content generation).
--   ** Mobile-First:** Designed for "Pass & Play" on a single device with smooth animations and touch interactions.
--   ** Offline Capable:** Includes a robust fallback database if the AI service is unreachable.
+-   **AI-Powered:** Uses Google Gemini API to generate infinite, culturally relevant famous figures (never run out of topics).
+-   **Flexible Gameplay:** Choose between **Single Impostor** or **Multiple Impostors** for larger groups.
+-   **Custom Mode:** Players can input their own words/names for a personalized experience.
+-   **Bilingual:** Full support for **English** and **Spanish** (UI & AI content generation).
+-   **Mobile-First:** Designed for "Pass & Play" on a single device with smooth animations and touch interactions.
+-   **Offline Capable:** Includes a robust fallback database if the AI service is unreachable.
 
 ##  Tech Stack
 
