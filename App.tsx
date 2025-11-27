@@ -241,18 +241,18 @@ export default function App() {
     const maxImpostors = Math.max(1, Math.floor(players.length / 2));
     
     return (
-      <div className="max-w-md mx-auto w-full space-y-4 animate-fade-in relative">
+      <div className="max-w-md mx-auto w-full space-y-4 animate-fade-in relative min-h-full flex flex-col justify-center pb-4">
         <div className="absolute top-0 right-0 z-10">
            <LanguageSwitcher />
         </div>
         
-        {/* Adjusted padding and logo size for better mobile fit. w-44 is the sweet spot. */}
-        <div className="text-center pt-2 flex justify-center">
+        {/* Logo centered */}
+        <div className="text-center pt-2 flex justify-center shrink-0">
           <Logo className="w-44 h-auto drop-shadow-2xl mx-auto" />
         </div>
-        <p className="text-gray-400 text-center -mt-2 text-sm">{t.setupSubtitle}</p>
+        <p className="text-gray-400 text-center -mt-2 text-sm shrink-0">{t.setupSubtitle}</p>
 
-        <div className="space-y-4 bg-game-card p-5 rounded-2xl border border-white/5 shadow-xl">
+        <div className="space-y-4 bg-game-card p-5 rounded-2xl border border-white/5 shadow-xl shrink-0">
           <div className="flex gap-2">
             <input
               type="text"
@@ -312,7 +312,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="space-y-3 pb-2">
+        <div className="space-y-3 shrink-0">
           <Button 
             fullWidth 
             onClick={startGameSetup} 
@@ -678,28 +678,33 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-game-dark text-game-text flex flex-col">
-      <main className="flex-grow flex items-center justify-center p-4">
-        {stage === GameStage.SETUP && renderSetup()}
-        {stage === GameStage.MODE_SELECT && renderModeSelect()}
-        {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
-        {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
-        {stage === GameStage.LOADING_AI && (
-            <div className="text-center space-y-4 animate-pulse">
-                <div className="w-16 h-16 border-4 border-game-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-xl font-bold text-game-primary">{t.summoning}</p>
-            </div>
-        )}
-        {stage === GameStage.DISTRIBUTE && renderDistribute()}
-        {stage === GameStage.PLAYING && renderPlaying()}
-        {stage === GameStage.REVEAL && renderReveal()}
+    <div className="h-[100dvh] bg-game-dark text-game-text flex flex-col overflow-hidden">
+      <main className="flex-grow overflow-y-auto p-4 flex flex-col items-center custom-scrollbar">
+        {/* Wrapper to ensure content centers vertically when short but scrolls when long */}
+        <div className="w-full max-w-md my-auto">
+            {stage === GameStage.SETUP && renderSetup()}
+            {stage === GameStage.MODE_SELECT && renderModeSelect()}
+            {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
+            {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
+            {stage === GameStage.LOADING_AI && (
+                <div className="text-center space-y-4 animate-pulse">
+                    <div className="w-16 h-16 border-4 border-game-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-xl font-bold text-game-primary">{t.summoning}</p>
+                </div>
+            )}
+            {stage === GameStage.DISTRIBUTE && renderDistribute()}
+            {stage === GameStage.PLAYING && renderPlaying()}
+            {stage === GameStage.REVEAL && renderReveal()}
+        </div>
       </main>
 
-      <footer className="w-full p-4 text-center">
-
+      <footer className="flex-shrink-0 w-full p-4 text-center bg-game-dark z-10 relative">
           <p className="text-xs text-white/20 cursor-default">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
+          <div className="absolute bottom-1 right-2 opacity-0 hover:opacity-100 transition-opacity">
+               <button onClick={downloadAppIcons} className="text-[10px] text-gray-700 hover:text-gray-500">Descargar Iconos</button>
+          </div>
       </footer>
     </div>
   );
