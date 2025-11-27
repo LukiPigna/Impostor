@@ -696,12 +696,6 @@ export default function App() {
       </main>
 
       <footer className="w-full p-4 text-center">
-          <button 
-             onClick={downloadAppIcons}
-             className="text-xs text-white/20 hover:text-white/80 transition-colors mb-2 underline"
-          >
-             Descargar Iconos
-          </button>
           <p className="text-xs text-white/20 cursor-default">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
