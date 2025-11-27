@@ -591,20 +591,28 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-game-dark text-game-text p-4 flex items-center justify-center">
-      {stage === GameStage.SETUP && renderSetup()}
-      {stage === GameStage.MODE_SELECT && renderModeSelect()}
-      {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
-      {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
-      {stage === GameStage.LOADING_AI && (
-          <div className="text-center space-y-4 animate-pulse">
-              <div className="w-16 h-16 border-4 border-game-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-xl font-bold text-game-primary">{t.summoning}</p>
-          </div>
-      )}
-      {stage === GameStage.DISTRIBUTE && renderDistribute()}
-      {stage === GameStage.PLAYING && renderPlaying()}
-      {stage === GameStage.REVEAL && renderReveal()}
+    <div className="min-h-screen bg-game-dark text-game-text flex flex-col">
+      <main className="flex-grow flex items-center justify-center p-4">
+        {stage === GameStage.SETUP && renderSetup()}
+        {stage === GameStage.MODE_SELECT && renderModeSelect()}
+        {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
+        {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
+        {stage === GameStage.LOADING_AI && (
+            <div className="text-center space-y-4 animate-pulse">
+                <div className="w-16 h-16 border-4 border-game-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-xl font-bold text-game-primary">{t.summoning}</p>
+            </div>
+        )}
+        {stage === GameStage.DISTRIBUTE && renderDistribute()}
+        {stage === GameStage.PLAYING && renderPlaying()}
+        {stage === GameStage.REVEAL && renderReveal()}
+      </main>
+
+      <footer className="w-full p-4 text-center">
+          <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default">
+            © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
+          </p>
+      </footer>
     </div>
   );
 }
