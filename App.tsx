@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost } from 'lucide-react';
+import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost, Download } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
+import { Logo, downloadAppIcons } from './components/Logo';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
@@ -244,12 +245,11 @@ export default function App() {
            <LanguageSwitcher />
         </div>
         
-        <div className="text-center space-y-2 pt-8">
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-game-primary to-game-accent tracking-tighter drop-shadow-sm">
-            {t.appTitle}
-          </h1>
-          <p className="text-gray-400">{t.setupSubtitle}</p>
+        <div className="text-center pt-8 flex justify-center">
+          {/* Logo Component instead of Text */}
+          <Logo className="w-56 h-auto drop-shadow-lg" />
         </div>
+        <p className="text-gray-400 text-center -mt-4">{t.setupSubtitle}</p>
 
         <div className="space-y-4 bg-game-card p-6 rounded-2xl border border-white/5 shadow-xl">
           <div className="flex gap-2">
@@ -695,9 +695,15 @@ export default function App() {
       </main>
 
       <footer className="w-full p-4 text-center">
-          <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default">
+          <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default mb-2">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
+          <button 
+            onClick={downloadAppIcons}
+            className="text-[10px] text-game-primary/50 hover:text-game-primary uppercase tracking-wider flex items-center justify-center gap-1 mx-auto transition-colors"
+          >
+             <Download size={10} /> Descargar Iconos
+          </button>
       </footer>
     </div>
   );
