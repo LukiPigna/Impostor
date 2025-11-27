@@ -246,8 +246,8 @@ export default function App() {
         </div>
         
         <div className="text-center pt-8 flex justify-center">
-          {/* Logo Component instead of Text */}
-          <Logo className="w-56 h-auto drop-shadow-lg" />
+          {/* Logo Component - Adjusted width for new aspect ratio */}
+          <Logo className="w-64 h-auto drop-shadow-2xl mx-auto" />
         </div>
         <p className="text-gray-400 text-center -mt-4">{t.setupSubtitle}</p>
 
@@ -698,12 +698,7 @@ export default function App() {
           <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default mb-2">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
-          <button 
-            onClick={downloadAppIcons}
-            className="text-[10px] text-game-primary/50 hover:text-game-primary uppercase tracking-wider flex items-center justify-center gap-1 mx-auto transition-colors"
-          >
-             <Download size={10} /> Descargar Iconos
-          </button>
+
       </footer>
     </div>
   );

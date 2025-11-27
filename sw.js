@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impostor-game-v1';
+const CACHE_NAME = 'impostor-v1';
 const urlsToCache = [
   '/',
   '/index.html',
