@@ -77,7 +77,8 @@ export default function App() {
       name: newPlayerName.trim(),
       isImpostor: false,
     };
-    setPlayers(prev => [...prev, newPlayer]);
+    // NEW LOGIC: Add new player to the BEGINNING of the array
+    setPlayers(prev => [newPlayer, ...prev]);
     setNewPlayerName('');
   };
 
@@ -240,18 +241,18 @@ export default function App() {
     const maxImpostors = Math.max(1, Math.floor(players.length / 2));
     
     return (
-      <div className="max-w-md mx-auto w-full space-y-8 animate-fade-in relative">
+      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in relative">
         <div className="absolute top-0 right-0 z-10">
            <LanguageSwitcher />
         </div>
         
-        <div className="text-center pt-8 flex justify-center">
-          {/* Logo Component - Adjusted width for new aspect ratio */}
-          <Logo className="w-64 h-auto drop-shadow-2xl mx-auto" />
+        {/* Adjusted padding and logo size for better mobile fit */}
+        <div className="text-center pt-2 flex justify-center">
+          <Logo className="w-48 h-auto drop-shadow-2xl mx-auto" />
         </div>
-        <p className="text-gray-400 text-center -mt-4">{t.setupSubtitle}</p>
+        <p className="text-gray-400 text-center -mt-4 text-sm">{t.setupSubtitle}</p>
 
-        <div className="space-y-4 bg-game-card p-6 rounded-2xl border border-white/5 shadow-xl">
+        <div className="space-y-4 bg-game-card p-5 rounded-2xl border border-white/5 shadow-xl">
           <div className="flex gap-2">
             <input
               type="text"
@@ -268,7 +269,7 @@ export default function App() {
 
           <div className="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
             {players.length === 0 && (
-              <p className="text-center text-gray-600 py-8 italic">{t.noPlayers}</p>
+              <p className="text-center text-gray-600 py-8 italic text-sm">{t.noPlayers}</p>
             )}
             {players.map(player => (
               <div key={player.id} className="flex justify-between items-center bg-game-dark/50 p-3 rounded-lg border border-white/5 animate-fade-in hover:bg-game-dark/80 transition-colors">
@@ -285,18 +286,18 @@ export default function App() {
 
           {/* Impostor Count */}
           {players.length >= MIN_PLAYERS && (
-             <div className="flex items-center justify-between bg-game-dark/30 p-4 rounded-xl border border-white/5 mt-4">
+             <div className="flex items-center justify-between bg-game-dark/30 p-3 rounded-xl border border-white/5 mt-2">
                 <div className="flex flex-col">
                     <span className="text-gray-200 font-bold text-sm">{t.numImpostors}</span>
                     <span className="text-gray-500 text-xs">{t.recommended}: {Math.ceil(players.length / 5)}</span>
                 </div>
-                <div className="flex items-center gap-4 bg-game-dark rounded-lg p-1.5 border border-white/5">
+                <div className="flex items-center gap-4 bg-game-dark rounded-lg p-1 border border-white/5">
                    <button 
                      onClick={() => updateImpostorCount(-1)}
                      disabled={impostorCount <= 1}
                      className="p-1.5 hover:bg-white/10 rounded-md text-game-primary disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
                    >
-                     <Minus size={18} />
+                     <Minus size={16} />
                    </button>
                    <span className="font-bold text-lg w-4 text-center text-white">{impostorCount}</span>
                    <button 
@@ -304,14 +305,14 @@ export default function App() {
                       disabled={impostorCount >= maxImpostors}
                       className="p-1.5 hover:bg-white/10 rounded-md text-game-primary disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
                    >
-                     <Plus size={18} />
+                     <Plus size={16} />
                    </button>
                 </div>
              </div>
           )}
         </div>
 
-        <div className="space-y-3 pb-4">
+        <div className="space-y-3 pb-2">
           <Button 
             fullWidth 
             onClick={startGameSetup} 
@@ -698,7 +699,15 @@ export default function App() {
           <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default mb-2">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
-
+          <div className="mt-4">
+            <button 
+              onClick={downloadAppIcons}
+              className="flex items-center justify-center gap-2 mx-auto text-xs text-game-primary/50 hover:text-game-primary transition-colors border border-transparent hover:border-game-primary/30 px-3 py-1 rounded-full"
+            >
+              <Download size={12} />
+              Descargar Iconos
+            </button>
+          </div>
       </footer>
     </div>
   );
