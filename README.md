@@ -6,33 +6,33 @@
 
 A modern, mobile-first social deduction party game. Built to modernize the classic "Impostor" experience with AI-generated content and custom user inputs.
 
-## 🚀 Live Demo
+##  Live Demo
 
 [Insert Link Here]
 
-## 💡 Why this project?
+##  Why this project?
 
 This project was born during a gathering with friends. We wanted to play the Impostor game, but existing apps lacked flexibility—specifically, we missed having **custom options** (inside jokes, specific themes) and a better UI.
 
 I built this web application to fill that gap, adding a touch of modern engineering with **Google's Gemini AI** to generate infinite "Famous People" topics, while keeping the ability to play with custom words.
 
-## ✨ Key Features
+##  Key Features
 
--   **🧠 AI-Powered:** Uses Google Gemini API to generate infinite, culturally relevant famous figures (never run out of topics).
--   **🎭 Flexible Gameplay:** Choose between **Single Impostor** or **Multiple Impostors** for larger groups.
--   **✍️ Custom Mode:** Players can input their own words/names for a personalized experience.
--   **🌍 Bilingual:** Full support for **English** and **Spanish** (UI & AI content generation).
--   **📱 Mobile-First:** Designed for "Pass & Play" on a single device with smooth animations and touch interactions.
--   **⚡ Offline Capable:** Includes a robust fallback database if the AI service is unreachable.
+-   ** AI-Powered:** Uses Google Gemini API to generate infinite, culturally relevant famous figures (never run out of topics).
+-   ** Flexible Gameplay:** Choose between **Single Impostor** or **Multiple Impostors** for larger groups.
+-   ** Custom Mode:** Players can input their own words/names for a personalized experience.
+-   ** Bilingual:** Full support for **English** and **Spanish** (UI & AI content generation).
+-   ** Mobile-First:** Designed for "Pass & Play" on a single device with smooth animations and touch interactions.
+-   ** Offline Capable:** Includes a robust fallback database if the AI service is unreachable.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 -   **Frontend:** React 19, TypeScript, Vite.
 -   **Styling:** Tailwind CSS (Modern, dark-themed UI).
 -   **AI Integration:** Google GenAI SDK (`@google/genai`).
 -   **Icons:** Lucide React.
 
-## ⚡ Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -64,15 +64,15 @@ You need a **Google Gemini API Key**. You can get one for free at [Google AI Stu
     npm run dev
     ```
 
-## 🤝 Feedback & Contributions
+##  Feedback & Contributions
 
 This is a personal project, but suggestions are welcome!
 
 If you have any feedback, found a bug, or just want to suggest a new feature (like an online multiplayer mode), feel free to reach out:
 
-📧 **Email:** [lucaspignataro@live.com](mailto:lucaspignataro@live.com)
+ **Email:** [lucaspignataro@live.com](mailto:lucaspignataro@live.com)
 
-## 👨‍💻 Author
+##  Author
 
 **Lucas Pignataro**
 
@@ -80,4 +80,4 @@ If you have any feedback, found a bug, or just want to suggest a new feature (li
 *   Connect with me on [LinkedIn](https://www.linkedin.com/in/lucas-pignataro-aa7747207/)
 
 ---
-*Created with ❤️ by Lucas Pignataro*
+*Created by Lucas Pignataro*
