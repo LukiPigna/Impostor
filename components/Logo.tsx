@@ -41,7 +41,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "w-48 h-auto" }) => {
         y="185" 
         fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" 
         fontWeight="900" 
-        fontSize="32" 
+        fontSize="40" 
         fill="url(#grad1)" 
         letterSpacing="2"
         textAnchor="middle"

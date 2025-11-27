@@ -77,7 +77,7 @@ export default function App() {
       name: newPlayerName.trim(),
       isImpostor: false,
     };
-    // NEW LOGIC: Add new player to the BEGINNING of the array
+    // NEW LOGIC: Add new player to the BEGINNING of the array (LIFO)
     setPlayers(prev => [newPlayer, ...prev]);
     setNewPlayerName('');
   };
@@ -241,16 +241,16 @@ export default function App() {
     const maxImpostors = Math.max(1, Math.floor(players.length / 2));
     
     return (
-      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in relative">
+      <div className="max-w-md mx-auto w-full space-y-4 animate-fade-in relative">
         <div className="absolute top-0 right-0 z-10">
            <LanguageSwitcher />
         </div>
         
         {/* Adjusted padding and logo size for better mobile fit */}
         <div className="text-center pt-2 flex justify-center">
-          <Logo className="w-48 h-auto drop-shadow-2xl mx-auto" />
+          <Logo className="w-40 h-auto drop-shadow-2xl mx-auto" />
         </div>
-        <p className="text-gray-400 text-center -mt-4 text-sm">{t.setupSubtitle}</p>
+        <p className="text-gray-400 text-center -mt-2 text-sm">{t.setupSubtitle}</p>
 
         <div className="space-y-4 bg-game-card p-5 rounded-2xl border border-white/5 shadow-xl">
           <div className="flex gap-2">
@@ -700,13 +700,12 @@ export default function App() {
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
           <div className="mt-4">
-            <button 
-              onClick={downloadAppIcons}
-              className="flex items-center justify-center gap-2 mx-auto text-xs text-game-primary/50 hover:text-game-primary transition-colors border border-transparent hover:border-game-primary/30 px-3 py-1 rounded-full"
-            >
-              <Download size={12} />
-              Descargar Iconos
-            </button>
+             <button 
+                onClick={downloadAppIcons}
+                className="inline-flex items-center gap-2 text-[10px] text-game-primary/50 hover:text-game-primary transition-colors border border-game-primary/20 rounded-full px-3 py-1"
+             >
+                <Download size={10} /> Descargar Iconos
+             </button>
           </div>
       </footer>
     </div>
