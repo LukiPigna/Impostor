@@ -31,6 +31,11 @@ export default function App() {
 
   const [secretWord, setSecretWord] = useState<string>('');
   const [impostorIds, setImpostorIds] = useState<string[]>([]);
+  
+  // Anti-Repetition State
+  const [previousImpostorIds, setPreviousImpostorIds] = useState<string[]>([]);
+  const [impostorStreak, setImpostorStreak] = useState<number>(0);
+
   const [impostorCount, setImpostorCount] = useState(1);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [customWords, setCustomWords] = useState<string[]>([]);
@@ -121,18 +126,67 @@ export default function App() {
   const prepareGameLogic = async (mode: GameMode, category?: Category) => {
     setIsLoading(true);
     
-    // Select N unique impostors
-    const shuffledIds = [...players].map(p => p.id).sort(() => 0.5 - Math.random());
-    const selectedImpostorIds = shuffledIds.slice(0, impostorCount);
-    setImpostorIds(selectedImpostorIds);
+    // --- Fisher-Yates Shuffle & Anti-Repetition Logic ---
+    const shuffled = [...players];
+    // Fisher-Yates Algorithm for unbiased shuffling
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Select candidates based on count
+    let selectedCandidates = shuffled.slice(0, impostorCount);
+
+    // LOGIC: Max 2 times in a row, and discourage repetition.
+    // This mostly applies to single impostor games (which is 90% of cases)
+    if (impostorCount === 1 && previousImpostorIds.length === 1) {
+        const candidate = selectedCandidates[0];
+        const lastImpostorId = previousImpostorIds[0];
+
+        if (candidate.id === lastImpostorId) {
+            let shouldSwap = false;
+
+            if (impostorStreak >= 2) {
+                // HARD CAP: Already was impostor 2 times in a row. Force swap.
+                shouldSwap = true;
+            } else {
+                // SOFT CAP: Was impostor once. "Not ideal".
+                // 50% chance to swap to encourage variety, but allowing it sometimes.
+                if (Math.random() > 0.5) {
+                    shouldSwap = true;
+                }
+            }
+
+            // Perform the swap if needed (pick the next person in the shuffled list)
+            if (shouldSwap && shuffled.length > 1) {
+                selectedCandidates = [shuffled[1]];
+            }
+        }
+    }
+
+    const newImpostorIds = selectedCandidates.map(p => p.id);
+    
+    // Update History State
+    const isSameAsLast = (impostorCount === 1 && 
+                          previousImpostorIds.length === 1 && 
+                          newImpostorIds[0] === previousImpostorIds[0]);
+    
+    if (isSameAsLast) {
+        setImpostorStreak(prev => prev + 1);
+    } else {
+        setImpostorStreak(1);
+    }
+    setPreviousImpostorIds(newImpostorIds);
+    setImpostorIds(newImpostorIds);
+    // ----------------------------------------------------
     
     // Select starting player randomly
     setStartingPlayerIndex(Math.floor(Math.random() * players.length));
     
-    // Update players
+    // Update players roles
     const updatedPlayers = players.map(p => ({
       ...p,
-      isImpostor: selectedImpostorIds.includes(p.id)
+      isImpostor: newImpostorIds.includes(p.id)
     }));
     setPlayers(updatedPlayers);
     setCurrentPlayerIndex(0);
@@ -210,6 +264,7 @@ export default function App() {
     setTransitionNextName(null);
     setIsCardFlipped(false);
     setStartingPlayerIndex(0);
+    // Note: We DO NOT reset previousImpostorIds or streak here, to maintain history across games
   };
 
   const formatTime = (seconds: number) => {
