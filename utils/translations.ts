@@ -17,6 +17,8 @@ export const translations: Record<SupportedLanguage, any> = {
     modeAiDesc: "Choose a category (Animals, Movies, etc.) and the AI picks a secret word.",
     modeCustom: "Custom Input",
     modeCustomDesc: "Everyone writes a word. The game picks one randomly.",
+    modeAmongUs: "Among Us",
+    modeAmongUsDesc: "The secret word is ONE of the players. Trust no one.",
     categories: {
       title: "Select Category",
       FAMOUS: "Famous People",
@@ -40,6 +42,7 @@ export const translations: Record<SupportedLanguage, any> = {
     tapToReveal: "Tap card to reveal role",
     nextPlayer: "Next Player",
     startGame: "Start Game",
+    allReady: "All Ready!",
     waitingFor: (name: string) => `Waiting for ${name}...`,
     discuss: "Discuss!",
     discussDesc: (count: number) => `Time to find the ${count > 1 ? 'impostors' : 'impostor'}.`,
@@ -70,6 +73,8 @@ export const translations: Record<SupportedLanguage, any> = {
     modeAiDesc: "Elige una categoría (Animales, Cine, etc) y la IA elige la palabra.",
     modeCustom: "Input Personalizado",
     modeCustomDesc: "Cada uno escribe una palabra. El juego elige una al azar.",
+    modeAmongUs: "Entre Nosotros",
+    modeAmongUsDesc: "La palabra secreta es UNO de los jugadores.",
     categories: {
       title: "Elige Categoría",
       FAMOUS: "Famosos",
@@ -80,7 +85,7 @@ export const translations: Record<SupportedLanguage, any> = {
       OBJECTS: "Objetos"
     },
     back: "Volver",
-    passPhone: (name: string) => `Pásale el teléfono a ${name}`,
+    passPhone: (name: string) => `Pasale el teléfono a ${name}`,
     hideInput: "¡Que no vean lo que escribís!",
     writeName: "Escribí una palabra:",
     submitPass: "Enviar y Pasar",
@@ -93,6 +98,7 @@ export const translations: Record<SupportedLanguage, any> = {
     tapToReveal: "Toca para revelar rol",
     nextPlayer: "Siguiente Jugador",
     startGame: "Comenzar Juego",
+    allReady: "¡Todos Listos!",
     waitingFor: (name: string) => `Esperando a ${name}...`,
     discuss: "¡A Debatir!",
     discussDesc: (count: number) => `Momento de encontrar ${count > 1 ? 'a los impostores' : 'al impostor'}.`,

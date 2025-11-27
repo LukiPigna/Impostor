@@ -42,8 +42,11 @@
                 success: '#9ece6a',
               }
             },
+            transitionTimingFunction: {
+              'card': 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Custom bezier for snappy feel
+            },
             animation: {
-              'flip': 'flip 0.6s preserve-3d',
+              'flip': 'flip 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) preserve-3d',
               'fade-in': 'fadeIn 0.5s ease-out',
               'bounce': 'bounce 1s infinite',
             },
@@ -69,6 +72,10 @@
       }
       .transform-style-3d {
         transform-style: preserve-3d;
+      }
+      /* Ensure the card flip transition uses the custom smoother timing */
+      .transform-card {
+        transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .backface-hidden {
         backface-visibility: hidden;

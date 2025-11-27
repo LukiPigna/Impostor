@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer } from 'lucide-react';
+import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
@@ -25,6 +25,9 @@ export default function App() {
 
   const [newPlayerName, setNewPlayerName] = useState('');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  // State to hold the name of the NEXT player instantly during card flip transition
+  const [transitionNextName, setTransitionNextName] = useState<string | null>(null);
+
   const [secretWord, setSecretWord] = useState<string>('');
   const [impostorIds, setImpostorIds] = useState<string[]>([]);
   const [impostorCount, setImpostorCount] = useState(1);
@@ -33,7 +36,6 @@ export default function App() {
   const [customInputIndex, setCustomInputIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('FAMOUS');
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME_SECONDS);
 
   const t = translations[language];
@@ -107,6 +109,8 @@ export default function App() {
   const handleModeSelection = (mode: GameMode) => {
     if (mode === GameMode.AI) {
       setStage(GameStage.CATEGORY_SELECT);
+    } else if (mode === GameMode.AMONG_US) {
+      prepareGameLogic(GameMode.AMONG_US);
     } else {
       prepareGameLogic(GameMode.CUSTOM);
     }
@@ -130,6 +134,7 @@ export default function App() {
     }));
     setPlayers(updatedPlayers);
     setCurrentPlayerIndex(0);
+    setTransitionNextName(null);
     setTimeLeft(ROUND_TIME_SECONDS); // Reset timer
 
     if (mode === GameMode.AI && category) {
@@ -137,6 +142,11 @@ export default function App() {
       const word = await generateWord(category, language);
       setSecretWord(word);
       setStage(GameStage.DISTRIBUTE);
+    } else if (mode === GameMode.AMONG_US) {
+       // Pick a random player as the secret
+       const randomPlayer = players[Math.floor(Math.random() * players.length)].name;
+       setSecretWord(randomPlayer);
+       setStage(GameStage.DISTRIBUTE);
     } else {
       // Custom mode flow
       setCustomWords([]);
@@ -163,14 +173,29 @@ export default function App() {
   };
 
   const handleNextPlayer = () => {
+    // Determine what to show on the cover immediately
+    const nextIdx = currentPlayerIndex + 1;
+    if (nextIdx < players.length) {
+      setTransitionNextName(players[nextIdx].name);
+    } else {
+      // We are done, going to game start
+      setTransitionNextName(null); // Will show default state or we can make a "Ready" state
+    }
+
+    // Start flip back animation
     setIsCardFlipped(false);
+    
+    // WAIT for animation to finish before switching logical index
+    // CSS transition is 0.7s (700ms)
     setTimeout(() => {
       if (currentPlayerIndex < players.length - 1) {
         setCurrentPlayerIndex(prev => prev + 1);
+        setTransitionNextName(null); // Clear override once logic catches up
       } else {
         setStage(GameStage.PLAYING);
+        setTransitionNextName(null);
       }
-    }, 600);
+    }, 700); 
   };
 
   const resetGame = () => {
@@ -180,6 +205,7 @@ export default function App() {
     setSecretWord('');
     setImpostorIds([]);
     setCurrentPlayerIndex(0);
+    setTransitionNextName(null);
     setIsCardFlipped(false);
     setStartingPlayerIndex(0);
   };
@@ -303,41 +329,67 @@ export default function App() {
   };
 
   const renderModeSelect = () => (
-    <div className="max-w-md mx-auto w-full space-y-6 text-center animate-fade-in pt-10">
-       <div className="flex justify-between items-center px-2">
+    <div className="max-w-md mx-auto w-full space-y-4 text-center animate-fade-in pt-6">
+       <div className="flex justify-between items-center px-2 mb-2">
          <h2 className="text-3xl font-black text-white">{t.chooseMode}</h2>
          <LanguageSwitcher />
        </div>
        
+       {/* AI Mode */}
        <button 
         onClick={() => handleModeSelection(GameMode.AI)}
         disabled={isLoading}
-        className="w-full bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-6 rounded-2xl border border-white/10 hover:border-game-accent hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+        className="w-full bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-accent hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
-           <Wand2 size={80} />
+           <Wand2 size={70} />
          </div>
-         <h3 className="text-xl font-bold text-white mb-1">{t.modeAi}</h3>
-         <p className="text-gray-400 text-sm leading-relaxed pr-12">
+         <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <Wand2 size={20} className="text-game-accent"/>
+            {t.modeAi}
+         </h3>
+         <p className="text-gray-400 text-xs leading-relaxed pr-12">
            {t.modeAiDesc}
          </p>
        </button>
 
+       {/* Among Us Mode */}
+       <button 
+        onClick={() => handleModeSelection(GameMode.AMONG_US)}
+        disabled={isLoading}
+        className="w-full bg-gradient-to-br from-red-900/40 to-orange-900/40 p-5 rounded-2xl border border-white/10 hover:border-game-danger hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+       >
+         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
+           <Ghost size={70} />
+         </div>
+         <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <Ghost size={20} className="text-game-danger"/>
+            {t.modeAmongUs}
+         </h3>
+         <p className="text-gray-400 text-xs leading-relaxed pr-12">
+           {t.modeAmongUsDesc}
+         </p>
+       </button>
+
+       {/* Custom Mode */}
        <button 
         onClick={() => handleModeSelection(GameMode.CUSTOM)}
         disabled={isLoading}
-        className="w-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 rounded-2xl border border-white/10 hover:border-game-primary hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+        className="w-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-primary hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
-           <Users size={80} />
+           <Users size={70} />
          </div>
-         <h3 className="text-xl font-bold text-white mb-1">{t.modeCustom}</h3>
-         <p className="text-gray-400 text-sm leading-relaxed pr-12">
+         <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <Users size={20} className="text-game-primary"/>
+            {t.modeCustom}
+         </h3>
+         <p className="text-gray-400 text-xs leading-relaxed pr-12">
            {t.modeCustomDesc}
          </p>
        </button>
 
-       <div className="pt-4">
+       <div className="pt-2">
           <Button variant="ghost" onClick={() => setStage(GameStage.SETUP)}>{t.back}</Button>
        </div>
     </div>
@@ -420,6 +472,34 @@ export default function App() {
     const player = players[currentPlayerIndex];
     const isCurrentUserImpostor = impostorIds.includes(player.id);
     
+    // Check if we are in transition state to show next player name or current
+    const displayNextName = transitionNextName;
+    const isLastPlayer = currentPlayerIndex >= players.length - 1;
+    const displayName = displayNextName || player?.name;
+
+    // Logic to determine front title
+    let frontTitle = "";
+    if (displayNextName) {
+        // If we are transitioning (card flipping down)
+        frontTitle = t.passPhone(displayNextName);
+    } else if (isCardFlipped) {
+        // If card is open, we don't care about front much, but logical consistency
+        frontTitle = t.passPhone(player.name);
+    } else {
+         // Default state
+        frontTitle = t.passPhone(player.name);
+    }
+
+    // Special case for end of round transition
+    if (displayNextName === null && isCardFlipped && isLastPlayer && transitionNextName === null) {
+        // We are on last player and card is open. Next click will start game.
+        // We don't change frontTitle here because we are about to unmount or change stage
+    } else if (transitionNextName === null && !isCardFlipped && !player) {
+         // Fallback
+         frontTitle = t.allReady;
+    }
+
+
     // Content for the card back (Revealed state)
     const cardBackContent = (
       <div className="flex flex-col items-center justify-center h-full space-y-4 animate-fade-in">
@@ -459,7 +539,10 @@ export default function App() {
              </div>
         </div>
         <div className="text-center">
-            <h3 className="text-2xl font-bold text-white mb-1">{t.passPhone(player.name)}</h3>
+            {/* Logic: If we are transitioning, show next name. If not, show current name */}
+            <h3 className="text-2xl font-bold text-white mb-1">
+                {transitionNextName ? t.passPhone(transitionNextName) : (player ? t.passPhone(player.name) : t.allReady)}
+            </h3>
             <p className="text-white/60 text-sm">{t.tapToReveal}</p>
         </div>
       </div>
@@ -493,7 +576,10 @@ export default function App() {
                     {currentPlayerIndex < players.length - 1 ? t.nextPlayer : t.startGame}
                  </Button>
             ) : (
-                <p className="text-gray-600 text-sm italic animate-pulse">{t.waitingFor(player.name)}</p>
+                <p className="text-gray-600 text-sm italic animate-pulse">
+                    {/* Show generic waiting text if standard, or nothing if transitioning */}
+                     {!transitionNextName && player ? t.waitingFor(player.name) : ""}
+                </p>
             )}
         </div>
       </div>

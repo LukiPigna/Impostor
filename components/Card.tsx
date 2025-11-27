@@ -14,7 +14,8 @@ export const Card: React.FC<CardProps> = ({ isFlipped, onFlip, frontContent, bac
       className="relative w-72 h-96 cursor-pointer group perspective-1000 mx-auto"
       onClick={() => !locked && onFlip()}
     >
-      <div className={`relative w-full h-full duration-500 transform-style-3d transition-transform ${isFlipped ? 'rotate-y-180' : ''}`}>
+      {/* Changed 'duration-500' to 'transform-card' which uses our 0.7s bezier in CSS */}
+      <div className={`relative w-full h-full transform-card transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
         
         {/* Front Face (Hidden/Face Down) */}
         <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-game-primary to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center border-4 border-white/10">

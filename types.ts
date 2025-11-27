@@ -19,6 +19,7 @@ export enum GameStage {
 export enum GameMode {
   AI = 'AI',
   CUSTOM = 'CUSTOM',
+  AMONG_US = 'AMONG_US', // New distinct game mode
 }
 
 export type Category = 'FAMOUS' | 'ANIMALS' | 'MOVIES' | 'PLACES' | 'FOOD' | 'OBJECTS';
