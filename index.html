@@ -2,12 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Spy Emoji Favicon (No external file needed) -->
+    <!-- Spy Emoji Favicon (No external file needed for browser tab) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕵️‍♂️</text></svg>">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS Support -->
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Impostor">
     
     <!-- Mobile Chrome/Safari Theme Color (Matches game background) -->
     <meta name="theme-color" content="#1a1b26">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <!-- Social Meta Tags -->
     <meta name="description" content="Juego el impostor hecho por mi." />
@@ -114,5 +122,20 @@
     <div id="root"></div>
     <!-- CRITICAL: Entry point for Vite/React App -->
     <script type="module" src="/index.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
