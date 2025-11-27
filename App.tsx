@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost, Download } from 'lucide-react';
+import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
-import { Logo, downloadAppIcons } from './components/Logo';
+import { Logo } from './components/Logo';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
@@ -246,9 +246,9 @@ export default function App() {
            <LanguageSwitcher />
         </div>
         
-        {/* Adjusted padding and logo size for better mobile fit */}
+        {/* Adjusted padding and logo size for better mobile fit. Increased to w-56 as requested. */}
         <div className="text-center pt-2 flex justify-center">
-          <Logo className="w-40 h-auto drop-shadow-2xl mx-auto" />
+          <Logo className="w-56 h-auto drop-shadow-2xl mx-auto" />
         </div>
         <p className="text-gray-400 text-center -mt-2 text-sm">{t.setupSubtitle}</p>
 
@@ -699,14 +699,6 @@ export default function App() {
           <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default mb-2">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
-          <div className="mt-4">
-             <button 
-                onClick={downloadAppIcons}
-                className="inline-flex items-center gap-2 text-[10px] text-game-primary/50 hover:text-game-primary transition-colors border border-game-primary/20 rounded-full px-3 py-1"
-             >
-                <Download size={10} /> Descargar Iconos
-             </button>
-          </div>
       </footer>
     </div>
   );
