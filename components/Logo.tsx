@@ -68,7 +68,8 @@ export const downloadAppIcons = () => {
     ctx.fillStyle = '#1a1b26';
     ctx.fillRect(0, 0, size, size);
 
-    // Create SVG String for the Icon Only (Centered in square)
+    // Create SVG String for the Icon Only (Centered in square with safe area)
+    // Applied scaling 0.75 and recentering so it doesn't get cropped by circle masks
     const svgString = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
         <defs>
@@ -79,8 +80,10 @@ export const downloadAppIcons = () => {
         </defs>
         <rect x="0" y="0" width="200" height="200" fill="#1a1b26"/>
         
-        <!-- Center graphic manually -->
-        <g transform="translate(10, 20)">
+        <!-- Center graphic manually with Scale 0.75 for Safe Area -->
+        <!-- Logic: Target Center 100,100. Original Center approx 90,80. -->
+        <!-- Translate logic applied: translate(32.5, 40) scale(0.75) -->
+        <g transform="translate(32.5, 40) scale(0.75)">
            <!-- Hat -->
            <path d="M70 20 L110 20 L120 50 L60 50 Z" fill="#7aa2f7" />
            <rect x="50" y="50" width="80" height="10" rx="2" fill="#7aa2f7" />

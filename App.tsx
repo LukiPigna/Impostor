@@ -4,7 +4,7 @@ import { GameStage, GameMode, Player, SupportedLanguage, Category } from './type
 import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
-import { Logo } from './components/Logo';
+import { Logo, downloadAppIcons } from './components/Logo';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
@@ -246,9 +246,9 @@ export default function App() {
            <LanguageSwitcher />
         </div>
         
-        {/* Adjusted padding and logo size for better mobile fit. Increased to w-56 as requested. */}
+        {/* Adjusted padding and logo size for better mobile fit. w-44 is the sweet spot. */}
         <div className="text-center pt-2 flex justify-center">
-          <Logo className="w-56 h-auto drop-shadow-2xl mx-auto" />
+          <Logo className="w-44 h-auto drop-shadow-2xl mx-auto" />
         </div>
         <p className="text-gray-400 text-center -mt-2 text-sm">{t.setupSubtitle}</p>
 
@@ -696,7 +696,13 @@ export default function App() {
       </main>
 
       <footer className="w-full p-4 text-center">
-          <p className="text-xs text-white/20 hover:text-white/50 transition-colors cursor-default mb-2">
+          <button 
+             onClick={downloadAppIcons}
+             className="text-xs text-white/20 hover:text-white/80 transition-colors mb-2 underline"
+          >
+             Descargar Iconos
+          </button>
+          <p className="text-xs text-white/20 cursor-default">
             © {new Date().getFullYear()} Created by <span className="font-bold">Lucas Pignataro</span>
           </p>
       </footer>
