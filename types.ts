@@ -8,6 +8,7 @@ export interface Player {
 export enum GameStage {
   SETUP = 'SETUP',
   MODE_SELECT = 'MODE_SELECT',
+  CATEGORY_SELECT = 'CATEGORY_SELECT',
   CUSTOM_INPUT = 'CUSTOM_INPUT',
   LOADING_AI = 'LOADING_AI',
   DISTRIBUTE = 'DISTRIBUTE',
@@ -16,8 +17,10 @@ export enum GameStage {
 }
 
 export enum GameMode {
-  FAMOUS = 'FAMOUS',
+  AI = 'AI',
   CUSTOM = 'CUSTOM',
 }
+
+export type Category = 'FAMOUS' | 'ANIMALS' | 'MOVIES' | 'PLACES' | 'FOOD' | 'OBJECTS';
 
 export type SupportedLanguage = 'en' | 'es';

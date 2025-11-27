@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages } from 'lucide-react';
-import { GameStage, GameMode, Player, SupportedLanguage } from './types';
-import { generateFamousPerson } from './services/geminiService';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Languages, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer } from 'lucide-react';
+import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
+import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
+const ROUND_TIME_SECONDS = 180; // 3 minutes
 
 export default function App() {
+  // State initialization with Lazy Initializers for LocalStorage
   const [stage, setStage] = useState<GameStage>(GameStage.SETUP);
-  const [players, setPlayers] = useState<Player[]>([]);
+  
+  const [players, setPlayers] = useState<Player[]>(() => {
+    const saved = localStorage.getItem('impostor_players');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [language, setLanguage] = useState<SupportedLanguage>(() => {
+    const saved = localStorage.getItem('impostor_language');
+    return (saved === 'en' || saved === 'es') ? saved : 'es';
+  });
+
   const [newPlayerName, setNewPlayerName] = useState('');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [secretWord, setSecretWord] = useState<string>('');
@@ -21,11 +33,39 @@ export default function App() {
   const [customInputIndex, setCustomInputIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
-  const [language, setLanguage] = useState<SupportedLanguage>('es'); // Default to Spanish as requested
+  const [selectedCategory, setSelectedCategory] = useState<Category>('FAMOUS');
+  const [timeLeft, setTimeLeft] = useState(ROUND_TIME_SECONDS);
 
   const t = translations[language];
 
+  // --- Effects ---
+
+  // Persist Players
+  useEffect(() => {
+    localStorage.setItem('impostor_players', JSON.stringify(players));
+  }, [players]);
+
+  // Persist Language
+  useEffect(() => {
+    localStorage.setItem('impostor_language', language);
+  }, [language]);
+
+  // Timer Logic
+  useEffect(() => {
+    let interval: number;
+    if (stage === GameStage.PLAYING && timeLeft > 0) {
+      interval = window.setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [stage, timeLeft]);
+
   // --- Actions ---
+
+  const switchLanguage = (lang: SupportedLanguage) => {
+    setLanguage(lang);
+  };
 
   const addPlayer = () => {
     if (!newPlayerName.trim()) return;
@@ -64,32 +104,41 @@ export default function App() {
     setStage(GameStage.MODE_SELECT);
   };
 
-  const selectMode = async (mode: GameMode) => {
+  const handleModeSelection = (mode: GameMode) => {
+    if (mode === GameMode.AI) {
+      setStage(GameStage.CATEGORY_SELECT);
+    } else {
+      prepareGameLogic(GameMode.CUSTOM);
+    }
+  };
+
+  const prepareGameLogic = async (mode: GameMode, category?: Category) => {
     setIsLoading(true);
+    
     // Select N unique impostors
     const shuffledIds = [...players].map(p => p.id).sort(() => 0.5 - Math.random());
     const selectedImpostorIds = shuffledIds.slice(0, impostorCount);
-    
     setImpostorIds(selectedImpostorIds);
     
     // Select starting player randomly
-    const startIdx = Math.floor(Math.random() * players.length);
-    setStartingPlayerIndex(startIdx);
+    setStartingPlayerIndex(Math.floor(Math.random() * players.length));
     
-    // Update players with basic roles
+    // Update players
     const updatedPlayers = players.map(p => ({
       ...p,
       isImpostor: selectedImpostorIds.includes(p.id)
     }));
     setPlayers(updatedPlayers);
     setCurrentPlayerIndex(0);
+    setTimeLeft(ROUND_TIME_SECONDS); // Reset timer
 
-    if (mode === GameMode.FAMOUS) {
+    if (mode === GameMode.AI && category) {
       setStage(GameStage.LOADING_AI);
-      const word = await generateFamousPerson(language);
+      const word = await generateWord(category, language);
       setSecretWord(word);
       setStage(GameStage.DISTRIBUTE);
     } else {
+      // Custom mode flow
       setCustomWords([]);
       setCustomInputIndex(0);
       setStage(GameStage.CUSTOM_INPUT);
@@ -105,8 +154,9 @@ export default function App() {
     if (customInputIndex < players.length - 1) {
       setCustomInputIndex(prev => prev + 1);
     } else {
-      // All words submitted, pick one
-      const pickedWord = newWords[Math.floor(Math.random() * newWords.length)];
+      // All words submitted, pick one that isn't empty
+      const validWords = newWords.filter(w => w.length > 0);
+      const pickedWord = validWords[Math.floor(Math.random() * validWords.length)];
       setSecretWord(pickedWord);
       setStage(GameStage.DISTRIBUTE);
     }
@@ -125,39 +175,50 @@ export default function App() {
 
   const resetGame = () => {
     setStage(GameStage.SETUP);
+    // Keep names, reset roles
     setPlayers(players.map(p => ({ ...p, isImpostor: false, word: undefined })));
     setSecretWord('');
     setImpostorIds([]);
     setCurrentPlayerIndex(0);
     setIsCardFlipped(false);
-    setImpostorCount(1);
     setStartingPlayerIndex(0);
   };
 
-  // --- Renders ---
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // --- Render Components ---
+
+  const LanguageSwitcher = () => (
+    <div className="flex bg-game-card rounded-lg p-1 border border-white/5 shadow-lg">
+      <button 
+        onClick={() => switchLanguage('en')}
+        className={`px-3 py-1.5 rounded text-xs font-bold transition-all duration-200 ${language === 'en' ? 'bg-game-primary text-game-dark shadow-sm' : 'text-gray-400 hover:text-white'}`}
+      >
+        EN
+      </button>
+      <button 
+        onClick={() => switchLanguage('es')}
+        className={`px-3 py-1.5 rounded text-xs font-bold transition-all duration-200 ${language === 'es' ? 'bg-game-primary text-game-dark shadow-sm' : 'text-gray-400 hover:text-white'}`}
+      >
+        ES
+      </button>
+    </div>
+  );
 
   const renderSetup = () => {
     const maxImpostors = Math.max(1, Math.floor(players.length / 2));
     
     return (
-      <div className="max-w-md mx-auto w-full space-y-8 animate-fade-in">
-        <div className="text-center space-y-2 relative">
-          <div className="absolute top-0 right-0">
-             <div className="flex bg-game-card rounded-lg p-1 border border-white/5">
-                <button 
-                  onClick={() => setLanguage('en')}
-                  className={`px-2 py-1 rounded text-xs font-bold transition-all ${language === 'en' ? 'bg-game-primary text-game-dark' : 'text-gray-400 hover:text-white'}`}
-                >
-                  EN
-                </button>
-                <button 
-                  onClick={() => setLanguage('es')}
-                  className={`px-2 py-1 rounded text-xs font-bold transition-all ${language === 'es' ? 'bg-game-primary text-game-dark' : 'text-gray-400 hover:text-white'}`}
-                >
-                  ES
-                </button>
-             </div>
-          </div>
+      <div className="max-w-md mx-auto w-full space-y-8 animate-fade-in relative">
+        <div className="absolute top-0 right-0 z-10">
+           <LanguageSwitcher />
+        </div>
+        
+        <div className="text-center space-y-2 pt-8">
           <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-game-primary to-game-accent tracking-tighter drop-shadow-sm">
             {t.appTitle}
           </h1>
@@ -179,9 +240,9 @@ export default function App() {
             </Button>
           </div>
 
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
             {players.length === 0 && (
-              <p className="text-center text-gray-600 py-4 italic">{t.noPlayers}</p>
+              <p className="text-center text-gray-600 py-8 italic">{t.noPlayers}</p>
             )}
             {players.map(player => (
               <div key={player.id} className="flex justify-between items-center bg-game-dark/50 p-3 rounded-lg border border-white/5 animate-fade-in hover:bg-game-dark/80 transition-colors">
@@ -196,7 +257,7 @@ export default function App() {
             ))}
           </div>
 
-          {/* Impostor Count Selection */}
+          {/* Impostor Count */}
           {players.length >= MIN_PLAYERS && (
              <div className="flex items-center justify-between bg-game-dark/30 p-4 rounded-xl border border-white/5 mt-4">
                 <div className="flex flex-col">
@@ -224,7 +285,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 pb-4">
           <Button 
             fullWidth 
             onClick={startGameSetup} 
@@ -242,30 +303,33 @@ export default function App() {
   };
 
   const renderModeSelect = () => (
-    <div className="max-w-md mx-auto w-full space-y-6 text-center animate-fade-in">
-       <h2 className="text-3xl font-black text-white mb-8">{t.chooseMode}</h2>
+    <div className="max-w-md mx-auto w-full space-y-6 text-center animate-fade-in pt-10">
+       <div className="flex justify-between items-center px-2">
+         <h2 className="text-3xl font-black text-white">{t.chooseMode}</h2>
+         <LanguageSwitcher />
+       </div>
        
        <button 
-        onClick={() => selectMode(GameMode.FAMOUS)}
+        onClick={() => handleModeSelection(GameMode.AI)}
         disabled={isLoading}
         className="w-full bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-6 rounded-2xl border border-white/10 hover:border-game-accent hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
-           <Crown size={80} />
+           <Wand2 size={80} />
          </div>
-         <h3 className="text-xl font-bold text-white mb-1">{t.modeFamous}</h3>
+         <h3 className="text-xl font-bold text-white mb-1">{t.modeAi}</h3>
          <p className="text-gray-400 text-sm leading-relaxed pr-12">
-           {t.modeFamousDesc(impostorCount)}
+           {t.modeAiDesc}
          </p>
        </button>
 
        <button 
-        onClick={() => selectMode(GameMode.CUSTOM)}
+        onClick={() => handleModeSelection(GameMode.CUSTOM)}
         disabled={isLoading}
         className="w-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 rounded-2xl border border-white/10 hover:border-game-primary hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
-           <Wand2 size={80} />
+           <Users size={80} />
          </div>
          <h3 className="text-xl font-bold text-white mb-1">{t.modeCustom}</h3>
          <p className="text-gray-400 text-sm leading-relaxed pr-12">
@@ -279,10 +343,44 @@ export default function App() {
     </div>
   );
 
+  const renderCategorySelect = () => {
+    const categories: {id: Category, icon: React.ReactNode, label: string}[] = [
+      { id: 'FAMOUS', icon: <Crown size={24} />, label: t.categories.FAMOUS },
+      { id: 'ANIMALS', icon: <Cat size={24} />, label: t.categories.ANIMALS },
+      { id: 'MOVIES', icon: <Clapperboard size={24} />, label: t.categories.MOVIES },
+      { id: 'PLACES', icon: <MapPin size={24} />, label: t.categories.PLACES },
+      { id: 'FOOD', icon: <Utensils size={24} />, label: t.categories.FOOD },
+      { id: 'OBJECTS', icon: <Box size={24} />, label: t.categories.OBJECTS },
+    ];
+
+    return (
+      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in pt-6">
+        <h2 className="text-3xl font-black text-white text-center">{t.categories.title}</h2>
+        
+        <div className="grid grid-cols-2 gap-4">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => prepareGameLogic(GameMode.AI, cat.id)}
+              className="bg-game-card hover:bg-game-primary/20 border border-white/5 hover:border-game-primary p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-105"
+            >
+              <div className="text-game-primary">{cat.icon}</div>
+              <span className="font-bold text-gray-200">{cat.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="pt-4">
+          <Button variant="ghost" fullWidth onClick={() => setStage(GameStage.MODE_SELECT)}>{t.back}</Button>
+        </div>
+      </div>
+    );
+  };
+
   const renderCustomInput = () => {
     const currentPlayer = players[customInputIndex];
     return (
-      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in">
+      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in pt-10">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-game-primary">{t.passPhone(currentPlayer.name)}</h2>
           <p className="text-gray-400 text-sm">{t.hideInput}</p>
@@ -306,7 +404,7 @@ export default function App() {
               autoFocus
               autoComplete="off"
               className="w-full bg-game-dark border border-gray-600 rounded-xl px-4 py-4 text-center text-xl font-bold text-white mb-6 focus:border-game-primary focus:outline-none"
-              placeholder="e.g. Batman"
+              placeholder="..."
             />
             <Button fullWidth type="submit">{t.submitPass}</Button>
           </form>
@@ -406,11 +504,16 @@ export default function App() {
     const startingPlayer = players[startingPlayerIndex];
     
     return (
-      <div className="max-w-md mx-auto w-full text-center space-y-8 animate-fade-in">
+      <div className="max-w-md mx-auto w-full text-center space-y-6 animate-fade-in pt-6">
+          {/* Timer */}
+          <div className="flex justify-center mb-2">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${timeLeft < 30 ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-game-card border-white/10 text-game-primary'}`}>
+              <Timer size={18} className={timeLeft < 30 ? 'animate-pulse' : ''} />
+              <span className="font-mono font-bold text-xl">{formatTime(timeLeft)}</span>
+            </div>
+          </div>
+
           <div className="space-y-4">
-              <div className="w-24 h-24 mx-auto bg-gradient-to-tr from-game-primary to-game-accent rounded-full flex items-center justify-center shadow-2xl shadow-game-primary/30">
-                  <span className="text-4xl">🤔</span>
-              </div>
               <h2 className="text-4xl font-black text-white">{t.discuss}</h2>
               <p className="text-xl text-gray-300">{t.discussDesc(impostorCount)}</p>
           </div>
@@ -446,7 +549,7 @@ export default function App() {
   };
 
   const renderReveal = () => (
-    <div className="max-w-md mx-auto w-full text-center space-y-8 animate-fade-in">
+    <div className="max-w-md mx-auto w-full text-center space-y-8 animate-fade-in pt-10">
         <div className="space-y-2">
             <h2 className="text-3xl font-black text-white">{t.gameOver}</h2>
             <p className="text-gray-400">{t.secretWas}</p>
@@ -488,9 +591,10 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-game-dark text-game-text p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-game-dark text-game-text p-4 flex items-center justify-center">
       {stage === GameStage.SETUP && renderSetup()}
       {stage === GameStage.MODE_SELECT && renderModeSelect()}
+      {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
       {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
       {stage === GameStage.LOADING_AI && (
           <div className="text-center space-y-4 animate-pulse">

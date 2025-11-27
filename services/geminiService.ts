@@ -1,47 +1,42 @@
-import { SupportedLanguage } from "../types";
+import { SupportedLanguage, Category } from "../types";
 
-// Much larger fallback database ("Agranda la base de datos")
-const BACKUPS = [
-  // Global Icons
-  "Lionel Messi", "Cristiano Ronaldo", "Michael Jackson", "Albert Einstein",
-  "Taylor Swift", "Harry Potter", "Batman", "Spider-Man", "Barack Obama",
-  "Donald Trump", "Shakira", "Beyoncé", "Elon Musk", "Marilyn Monroe",
-  "Pablo Picasso", "Frida Kahlo", "Diego Maradona", "Pelé", "Michael Jordan",
-  "Leonardo da Vinci", "Cleopatra", "Julius Caesar", "William Shakespeare",
-  "Napoleon Bonaparte", "Mahatma Gandhi", "Mother Teresa", "Pope Francis", 
-  "Queen Elizabeth II", "Tom Cruise", "Will Smith", "Johnny Depp", 
-  "Brad Pitt", "Angelina Jolie", "Kim Kardashian", "Dwayne Johnson",
-  "Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Oprah Winfrey",
-  "Walt Disney", "Elvis Presley", "Madonna", "Freddie Mercury",
-  "Bob Marley", "Vincent van Gogh", "Wolfgang Amadeus Mozart",
-  "Beethoven", "Isaac Newton", "Charles Darwin", "Neil Armstrong",
-  "SpongeBob SquarePants", "Darth Vader", "Joker", "James Bond",
-  "Sherlock Holmes", "Wonder Woman", "Superman", "Iron Man",
-  "Mickey Mouse", "Pikachu", "Mario Bros", "Sonic the Hedgehog"
-];
+// Fallback database in case API fails or is missing
+const BACKUPS: Record<string, string[]> = {
+  FAMOUS: ["Lionel Messi", "Taylor Swift", "Batman", "Marilyn Monroe", "Einstein"],
+  ANIMALS: ["Giraffe", "Penguin", "Lion", "Elephant", "Platypus"],
+  MOVIES: ["Titanic", "Star Wars", "Harry Potter", "The Matrix", "Frozen"],
+  PLACES: ["Paris", "Tokyo", "New York", "Egypt", "Mars"],
+  FOOD: ["Pizza", "Sushi", "Tacos", "Ice Cream", "Hamburger"],
+  OBJECTS: ["iPhone", "Umbrella", "Piano", "Toothbrush", "Chair"]
+};
 
-export const generateFamousPerson = async (language: SupportedLanguage = 'en'): Promise<string> => {
+export const generateWord = async (category: Category, language: SupportedLanguage = 'en'): Promise<string> => {
   try {
-    // 1. Safe API Key Extraction
-    // The guidelines specify using process.env.API_KEY directly.
     const apiKey = process.env.API_KEY;
 
+    // Use backup if no key provided
     if (!apiKey) {
-        console.warn("Gemini API Key is missing. Using offline backup database.");
-        return getRandomBackup();
+      console.warn("Gemini API Key missing. Using offline backup.");
+      return getRandomBackup(category);
     }
 
-    // 2. Dynamic Import
-    // This ensures the Google SDK code is only loaded when the button is pressed,
-    // avoiding initial page load crashes.
     const { GoogleGenAI } = await import("@google/genai");
-
     const ai = new GoogleGenAI({ apiKey });
 
+    // Dynamic prompt based on language and category
     const langPrompt = language === 'es' ? 'Spanish' : 'English';
+    const categoryPrompts: Record<Category, string> = {
+      FAMOUS: language === 'es' ? "un personaje famoso muy conocido globalmente" : "a globally famous person",
+      ANIMALS: language === 'es' ? "un animal conocido" : "a well-known animal",
+      MOVIES: language === 'es' ? "una película muy famosa" : "a very famous movie",
+      PLACES: language === 'es' ? "una ciudad o país famoso" : "a famous city or country",
+      FOOD: language === 'es' ? "una comida popular" : "a popular food item",
+      OBJECTS: language === 'es' ? "un objeto cotidiano común" : "a common everyday object"
+    };
+
     const contextPrompt = language === 'es' 
-      ? "Genera el nombre de una sola persona famosa (real o ficticia) muy conocida. SOLO el nombre."
-      : "Generate the name of a single, widely known famous person (real or fictional). ONLY the name.";
+      ? `Genera UNA sola palabra (o nombre corto) en Español. Debe ser: ${categoryPrompts[category]}. NO escribas frases, solo el nombre.`
+      : `Generate a SINGLE word (or short name) in English. It must be: ${categoryPrompts[category]}. Do NOT write sentences, just the name.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -49,14 +44,16 @@ export const generateFamousPerson = async (language: SupportedLanguage = 'en'): 
     });
 
     const text = response.text;
-    return text ? text.trim().replace(/['"]+/g, '') : getRandomBackup();
+    return text ? text.trim().replace(/['".]+/g, '') : getRandomBackup(category);
   } catch (error) {
-    console.error("Error generating famous person:", error);
-    // Graceful fallback so the game continues even if API fails
-    return getRandomBackup();
+    console.error("Error generating content:", error);
+    return getRandomBackup(category);
   }
 };
 
-const getRandomBackup = () => {
-  return BACKUPS[Math.floor(Math.random() * BACKUPS.length)];
+const getRandomBackup = (category: Category) => {
+  // Map category to backup keys, default to FAMOUS if somehow mapping fails
+  const key = Object.keys(BACKUPS).includes(category) ? category : 'FAMOUS';
+  const list = BACKUPS[key];
+  return list[Math.floor(Math.random() * list.length)];
 };
