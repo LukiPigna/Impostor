@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { SupportedLanguage } from "../types";
 
 // Much larger fallback database ("Agranda la base de datos")
@@ -23,8 +22,8 @@ const BACKUPS = [
 
 export const generateFamousPerson = async (language: SupportedLanguage = 'en'): Promise<string> => {
   try {
-    // Lazy initialization: Check environment only when function is called.
-    // This prevents the "process is not defined" crash on app load if the env var is missing.
+    // 1. Safe API Key Extraction
+    // The guidelines specify using process.env.API_KEY directly.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
@@ -32,17 +31,21 @@ export const generateFamousPerson = async (language: SupportedLanguage = 'en'): 
         return getRandomBackup();
     }
 
-    // Initialize only if key exists
+    // 2. Dynamic Import
+    // This ensures the Google SDK code is only loaded when the button is pressed,
+    // avoiding initial page load crashes.
+    const { GoogleGenAI } = await import("@google/genai");
+
     const ai = new GoogleGenAI({ apiKey });
 
     const langPrompt = language === 'es' ? 'Spanish' : 'English';
     const contextPrompt = language === 'es' 
-      ? "Genera el nombre de una persona famosa (real o ficticia) muy conocida por hablantes de español."
-      : "Generate the name of a single, widely known famous person (real or fictional).";
+      ? "Genera el nombre de una sola persona famosa (real o ficticia) muy conocida. SOLO el nombre."
+      : "Generate the name of a single, widely known famous person (real or fictional). ONLY the name.";
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: `${contextPrompt} Return ONLY the name, nothing else. Ensure variety and do not always pick the most obvious ones.`,
+      contents: `${contextPrompt} Ensure variety.`,
     });
 
     const text = response.text;

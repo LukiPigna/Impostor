@@ -7,9 +7,16 @@
     <title>Impostor Game</title>
     <script>
       // CRITICAL FIX FOR VERCEL/PRODUCTION:
-      // Defines a safe 'process.env' object in the browser to prevent "ReferenceError: process is not defined"
-      // when accessing process.env.API_KEY in the client code.
-      window.process = window.process || { env: {} };
+      // Robust polyfill for Node.js 'process' object to prevent "process is not defined" crashes.
+      // This runs before any other script.
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      window.process.cwd = window.process.cwd || function() { return '/'; };
+      
+      // Default to empty string to prevent access errors if keys are checked
+      if (!window.process.env.API_KEY) {
+        window.process.env.API_KEY = '';
+      }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -28,6 +35,14 @@
             },
             animation: {
               'flip': 'flip 0.6s preserve-3d',
+              'fade-in': 'fadeIn 0.5s ease-out',
+              'bounce': 'bounce 1s infinite',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
             }
           }
         }
@@ -51,6 +66,20 @@
       .rotate-y-180 {
         transform: rotateY(180deg);
       }
+      /* Custom scrollbar for player list */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #1a1b26; 
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #414868; 
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #565f89; 
+      }
     </style>
   <script type="importmap">
 {
@@ -66,5 +95,7 @@
 </head>
   <body>
     <div id="root"></div>
+    <!-- CRITICAL: Entry point for Vite/React App -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
