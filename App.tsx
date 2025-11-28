@@ -10,6 +10,25 @@ import { translations } from './utils/translations';
 const MIN_PLAYERS = 3;
 const ROUND_TIME_SECONDS = 180; // 3 minutes
 
+// --- CRYPTO RANDOM HELPERS ---
+const getSecureRandomInt = (max: number): number => {
+  if (max <= 0) return 0;
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] % max;
+};
+
+// True Fisher-Yates Shuffle using Crypto Randomness
+function secureShuffle<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = getSecureRandomInt(i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+// -----------------------------
+
 export default function App() {
   // State initialization with Lazy Initializers for LocalStorage
   const [stage, setStage] = useState<GameStage>(GameStage.SETUP);
@@ -126,47 +145,46 @@ export default function App() {
   const prepareGameLogic = async (mode: GameMode, category?: Category) => {
     setIsLoading(true);
     
-    // --- Fisher-Yates Shuffle & Anti-Repetition Logic ---
-    const shuffled = [...players];
-    // Fisher-Yates Algorithm for unbiased shuffling
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+    // 1. STRATEGIC SHUFFLE: Shuffle the PLAYERS array itself first.
+    // This ensures the phone passing order is completely random every game.
+    const shuffledGamePlayers: Player[] = secureShuffle(players);
+    
+    // 2. Select Candidates for Impostor from the shuffled list
+    let selectedCandidates: Player[] = shuffledGamePlayers.slice(0, impostorCount);
 
-    // Select candidates based on count
-    let selectedCandidates = shuffled.slice(0, impostorCount);
-
-    // LOGIC: Max 2 times in a row, and discourage repetition.
-    // This mostly applies to single impostor games (which is 90% of cases)
+    // 3. Anti-Repetition Logic (Improved)
+    // Only applies if single impostor (90% of games)
     if (impostorCount === 1 && previousImpostorIds.length === 1) {
         const candidate = selectedCandidates[0];
         const lastImpostorId = previousImpostorIds[0];
 
-        if (candidate.id === lastImpostorId) {
+        if (candidate && candidate.id === lastImpostorId) {
             let shouldSwap = false;
 
             if (impostorStreak >= 2) {
-                // HARD CAP: Already was impostor 2 times in a row. Force swap.
+                // STRICT RULE: If streak is 2 (this would be the 3rd time), FORCE SWAP.
                 shouldSwap = true;
+                console.log("Anti-Streak: Force Swap triggered (3rd time prevented)");
             } else {
-                // SOFT CAP: Was impostor once. "Not ideal".
-                // 50% chance to swap to encourage variety, but allowing it sometimes.
-                if (Math.random() > 0.5) {
-                    shouldSwap = true;
+                // SOFT RULE: If streak is 1 (this would be the 2nd time), 60% chance to swap.
+                const chance = getSecureRandomInt(100);
+                if (chance < 60) { // 60% chance to swap
+                     shouldSwap = true;
+                     console.log("Anti-Streak: Soft Swap triggered");
                 }
             }
 
-            // Perform the swap if needed (pick the next person in the shuffled list)
-            if (shouldSwap && shuffled.length > 1) {
-                selectedCandidates = [shuffled[1]];
+            // Perform the swap if needed
+            if (shouldSwap && shuffledGamePlayers.length > 1) {
+                // Pick the next person in the shuffled list
+                selectedCandidates = [shuffledGamePlayers[1]];
             }
         }
     }
 
     const newImpostorIds = selectedCandidates.map(p => p.id);
     
-    // Update History State
+    // Update Streak State
     const isSameAsLast = (impostorCount === 1 && 
                           previousImpostorIds.length === 1 && 
                           newImpostorIds[0] === previousImpostorIds[0]);
@@ -178,20 +196,23 @@ export default function App() {
     }
     setPreviousImpostorIds(newImpostorIds);
     setImpostorIds(newImpostorIds);
-    // ----------------------------------------------------
     
-    // Select starting player randomly
-    setStartingPlayerIndex(Math.floor(Math.random() * players.length));
-    
-    // Update players roles
-    const updatedPlayers = players.map(p => ({
+    // 4. Assign Roles & Update Main Player State
+    // We update the main state with the SHUFFLED list so the UI reflects the new passing order.
+    const updatedPlayers = shuffledGamePlayers.map(p => ({
       ...p,
       isImpostor: newImpostorIds.includes(p.id)
     }));
     setPlayers(updatedPlayers);
+
+    // 5. Select starting player for DISCUSSION (Crypto Random)
+    // This is independent of the passing order, adding another layer of strategy.
+    const startIdx = getSecureRandomInt(updatedPlayers.length);
+    setStartingPlayerIndex(startIdx);
+    
     setCurrentPlayerIndex(0);
     setTransitionNextName(null);
-    setTimeLeft(ROUND_TIME_SECONDS); // Reset timer
+    setTimeLeft(ROUND_TIME_SECONDS);
 
     if (mode === GameMode.AI && category) {
       setStage(GameStage.LOADING_AI);
@@ -199,12 +220,11 @@ export default function App() {
       setSecretWord(word);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.AMONG_US) {
-       // Pick a random player as the secret
-       const randomPlayer = players[Math.floor(Math.random() * players.length)].name;
-       setSecretWord(randomPlayer);
+       // Pick a random player as the secret (Secure Random)
+       const randomIdx = getSecureRandomInt(updatedPlayers.length);
+       setSecretWord(updatedPlayers[randomIdx].name);
        setStage(GameStage.DISTRIBUTE);
     } else {
-      // Custom mode flow
       setCustomWords([]);
       setCustomInputIndex(0);
       setStage(GameStage.CUSTOM_INPUT);
@@ -220,33 +240,28 @@ export default function App() {
     if (customInputIndex < players.length - 1) {
       setCustomInputIndex(prev => prev + 1);
     } else {
-      // All words submitted, pick one that isn't empty
+      // Securely pick one word
       const validWords = newWords.filter(w => w.length > 0);
-      const pickedWord = validWords[Math.floor(Math.random() * validWords.length)];
-      setSecretWord(pickedWord);
+      const pickedIndex = getSecureRandomInt(validWords.length);
+      setSecretWord(validWords[pickedIndex]);
       setStage(GameStage.DISTRIBUTE);
     }
   };
 
   const handleNextPlayer = () => {
-    // Determine what to show on the cover immediately
     const nextIdx = currentPlayerIndex + 1;
     if (nextIdx < players.length) {
       setTransitionNextName(players[nextIdx].name);
     } else {
-      // We are done, going to game start
-      setTransitionNextName(null); // Will show default state or we can make a "Ready" state
+      setTransitionNextName(null);
     }
 
-    // Start flip back animation
     setIsCardFlipped(false);
     
-    // WAIT for animation to finish before switching logical index
-    // CSS transition is 0.7s (700ms)
     setTimeout(() => {
       if (currentPlayerIndex < players.length - 1) {
         setCurrentPlayerIndex(prev => prev + 1);
-        setTransitionNextName(null); // Clear override once logic catches up
+        setTransitionNextName(null);
       } else {
         setStage(GameStage.PLAYING);
         setTransitionNextName(null);
@@ -256,7 +271,6 @@ export default function App() {
 
   const resetGame = () => {
     setStage(GameStage.SETUP);
-    // Keep names, reset roles
     setPlayers(players.map(p => ({ ...p, isImpostor: false, word: undefined })));
     setSecretWord('');
     setImpostorIds([]);
@@ -264,7 +278,7 @@ export default function App() {
     setTransitionNextName(null);
     setIsCardFlipped(false);
     setStartingPlayerIndex(0);
-    // Note: We DO NOT reset previousImpostorIds or streak here, to maintain history across games
+    // Note: previousImpostorIds & streak persist
   };
 
   const formatTime = (seconds: number) => {
