@@ -760,11 +760,6 @@ export default function App() {
           <p className="text-[10px] text-gray-500 cursor-default font-medium tracking-wide uppercase opacity-60">
             © {new Date().getFullYear()} Created by <span className="font-bold text-gray-400">Lucas Pignataro</span>
           </p>
-          <div className="mt-2">
-            <Button variant="ghost" onClick={downloadAppIcons} className="text-[10px] py-1 px-2 h-auto opacity-50 hover:opacity-100">
-              Descargar Iconos
-            </Button>
-          </div>
       </footer>
     </div>
   );
