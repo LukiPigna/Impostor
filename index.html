@@ -87,6 +87,15 @@
       }
     </script>
     <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Critical for locking the page */
+        position: fixed; /* Locks viewport on iOS */
+      }
+      
       body {
         background-color: #0f172a;
         color: #e2e8f0;
@@ -105,6 +114,7 @@
         z-index: -1;
         overflow: hidden;
         background: #0f172a;
+        pointer-events: none;
       }
       .mesh-orb {
         position: absolute;

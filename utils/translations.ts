@@ -4,6 +4,7 @@ export const translations: Record<SupportedLanguage, any> = {
   en: {
     appTitle: "IMPOSTOR",
     setupSubtitle: "Add friends to start the game",
+    addInOrder: "Add players in seating order (clockwise).",
     enterName: "Enter name...",
     addPlayer: "Add",
     noPlayers: "No players yet...",
@@ -60,6 +61,7 @@ export const translations: Record<SupportedLanguage, any> = {
   es: {
     appTitle: "IMPOSTOR",
     setupSubtitle: "Agrega amigos para comenzar",
+    addInOrder: "Agregá en el orden que están sentados (ronda).",
     enterName: "Nombre...",
     addPlayer: "Agregar",
     noPlayers: "Aún no hay jugadores...",

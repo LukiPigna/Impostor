@@ -136,8 +136,8 @@ export default function App() {
       name: newPlayerName.trim(),
       isImpostor: false,
     };
-    // Add new player to the START of the list (LIFO)
-    setPlayers(prev => [newPlayer, ...prev]);
+    // Add new player to the END of the list (FIFO) to preserve seating order
+    setPlayers(prev => [...prev, newPlayer]);
     setNewPlayerName('');
   };
 
@@ -184,13 +184,14 @@ export default function App() {
   const prepareGameLogic = async (mode: GameMode, category?: Category) => {
     setIsLoading(true);
     
-    // 1. Determine Turn Order (Shuffle the players physically for this round)
-    const turnOrderPlayers: Player[] = secureShuffle(players);
+    // 1. Maintain Turn Order: Use the players array exactly as entered.
+    // We clone it to avoid mutation issues, but we DO NOT SHUFFLE.
+    const turnOrderPlayers: Player[] = [...players];
 
-    // 2. Select Impostors INDEPENDENTLY of turn order.
+    // 2. Select Impostors randomly within the fixed order.
     // Create an array of indices [0, 1, 2, ... n]
     const indices = Array.from({ length: turnOrderPlayers.length }, (_, i) => i);
-    // Shuffle indices to pick random positions
+    // Shuffle only the indices to pick random positions for impostors
     const shuffledIndices = secureShuffle(indices);
     // Take the first N indices as candidates
     let selectedIndices = shuffledIndices.slice(0, impostorCount);
@@ -212,9 +213,7 @@ export default function App() {
 
             if (shouldSwap && turnOrderPlayers.length > 1) {
                 // Pick the next available random index that wasn't selected
-                // shuffledIndices has all indices in random order. 
-                // selectedIndices[0] is shuffledIndices[0].
-                // So we just take shuffledIndices[1] (which is a different random player).
+                // shuffledIndices[1] is a different random index
                 selectedIndices = [shuffledIndices[1]];
             }
         }
@@ -232,14 +231,14 @@ export default function App() {
     setPreviousImpostorIds(newImpostorIds);
     setImpostorIds(newImpostorIds);
     
-    // Apply roles to the TURN ORDER array
+    // Apply roles to the FIXED order array
     const updatedPlayers = turnOrderPlayers.map(p => ({
       ...p,
       isImpostor: newImpostorIds.includes(p.id)
     }));
     setPlayers(updatedPlayers);
 
-    // Select who starts discussing (Randomly from the new order)
+    // Select who starts discussing (Randomly, but referencing the fixed list)
     const startIdx = getSecureRandomInt(updatedPlayers.length);
     setStartingPlayerIndex(startIdx);
     
@@ -362,6 +361,11 @@ export default function App() {
               <Plus size={24} />
             </Button>
           </div>
+          
+          {/* Order instruction hint */}
+          <div className="text-center">
+             <p className="text-[10px] text-indigo-300/80 font-bold uppercase tracking-wider">{t.addInOrder}</p>
+          </div>
 
           <div className="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar min-h-[120px]">
             {players.length === 0 && (
@@ -376,7 +380,12 @@ export default function App() {
                 className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/5 animate-slide-up hover:bg-white/10 transition-colors group"
                 style={{ animationDelay: `${idx * 50}ms` }}
               >
-                <span className="font-semibold text-gray-200">{player.name}</span>
+                <div className="flex items-center gap-3">
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] flex items-center justify-center font-bold border border-indigo-500/30">
+                        {idx + 1}
+                    </span>
+                    <span className="font-semibold text-gray-200">{player.name}</span>
+                </div>
                 <button 
                   onClick={() => removePlayer(player.id)}
                   className="text-gray-500 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/5"
@@ -451,7 +460,7 @@ export default function App() {
           style={{ animationDelay: `${(idx + 1) * 100}ms` }}
          >
            <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity rotate-12 ${item.color}`}>
-             {React.cloneElement(item.icon as React.ReactElement, { size: 80 })}
+             {React.cloneElement(item.icon as React.ReactElement<any>, { size: 80 })}
            </div>
            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-3">
               <span className={`p-2 rounded-xl bg-white/5 ${item.color}`}>{item.icon}</span>
