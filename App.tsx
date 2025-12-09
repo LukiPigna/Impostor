@@ -186,6 +186,7 @@ export default function App() {
     
     // 1. Maintain Turn Order: Use the players array exactly as entered.
     // We clone it to avoid mutation issues, but we DO NOT SHUFFLE.
+    // This respects the user's "seating order".
     const turnOrderPlayers: Player[] = [...players];
 
     // 2. Select Impostors randomly within the fixed order.

@@ -37,13 +37,74 @@ const getRandomBackup = (category: Category, language: SupportedLanguage) => {
   return getSecureRandomItem(list);
 };
 
+// Generate a random letter to force the AI to diverge
+const getRandomLetter = () => {
+    const alphabet = "ABCDEFGHIJKLMNOPRSTUVW"; // Excluded tough letters like Q, X, Z for broader appeal
+    return getSecureRandomItem(alphabet.split(''));
+};
+
+const getRandomConstraint = (category: Category, language: SupportedLanguage): string => {
+    const isEs = language === 'es';
+    
+    // Constraints force the AI to step away from "Taylor Swift" or "Lionel Messi"
+    const constraints: Record<Category, string[]> = {
+        FAMOUS: isEs ? [
+            "Debe ser un villano de película", "Debe ser un cantante de los 80s", "Debe ser un científico famoso", 
+            "Debe ser un atleta olímpico", "Debe ser un personaje de Disney", "Debe ser un líder histórico",
+            "Debe ser un Youtuber famoso", "Debe ser un pintor clásico", "Su nombre debe empezar con " + getRandomLetter()
+        ] : [
+            "Must be a movie villain", "Must be an 80s singer", "Must be a famous scientist",
+            "Must be an olympic athlete", "Must be a Disney character", "Must be a historical leader",
+            "Must be a famous Youtuber", "Must be a classic painter", "Name must start with " + getRandomLetter()
+        ],
+        ANIMALS: isEs ? [
+            "Debe vivir en la selva", "Debe ser un animal microscópico", "Debe ser un animal extinto",
+            "Debe ser una raza de perro", "Debe ser un insecto venenoso", "Nombre debe empezar con " + getRandomLetter()
+        ] : [
+            "Must live in the jungle", "Must be microscopic", "Must be extinct",
+            "Must be a dog breed", "Must be a poisonous insect", "Name must start with " + getRandomLetter()
+        ],
+        MOVIES: isEs ? [
+            "Película de terror clásica", "Película animada de Pixar", "Película ganadora del Oscar",
+            "Película de superhéroes", "Comedia romántica de los 90s"
+        ] : [
+            "Classic horror movie", "Pixar animated movie", "Oscar winning movie",
+            "Superhero movie", "90s Rom-Com"
+        ],
+        PLACES: isEs ? [
+            "Una capital de Europa", "Una isla famosa", "Un desierto", "Un estadio de fútbol famoso",
+            "Un monumento asiático", "Una ciudad de Estados Unidos"
+        ] : [
+            "A European capital", "A famous island", "A desert", "A famous stadium",
+            "An Asian monument", "A US City"
+        ],
+        FOOD: isEs ? [
+            "Comida picante", "Un postre con chocolate", "Una fruta tropical", "Comida italiana",
+            "Comida callejera", "Un vegetal verde"
+        ] : [
+            "Spicy food", "Chocolate dessert", "Tropical fruit", "Italian dish",
+            "Street food", "Green vegetable"
+        ],
+        OBJECTS: isEs ? [
+            "Algo que encontrás en un baño", "Herramienta de construcción", "Instrumento musical",
+            "Algo que llevás en la playa", "Algo que hay en una oficina"
+        ] : [
+            "Something found in a bathroom", "Construction tool", "Musical instrument",
+            "Something brought to the beach", "Office supply"
+        ]
+    };
+
+    const list = constraints[category] || [];
+    return list.length > 0 ? getSecureRandomItem(list) : "";
+}
+
 export const generateWord = async (category: Category, language: SupportedLanguage = 'en'): Promise<string> => {
-  // 1. TIMEOUT RACE: If AI takes > 3 seconds, force use of Backup.
+  // 1. TIMEOUT RACE: If AI takes > 3.5 seconds, force use of Backup.
   const timeoutPromise = new Promise<string>((resolve) => {
     setTimeout(() => {
       console.warn("AI Request Timed out. Using Backup.");
       resolve(getRandomBackup(category, language));
-    }, 3000); // 3 Seconds Max
+    }, 3500); 
   });
 
   // 2. AI Request Logic
@@ -59,45 +120,24 @@ export const generateWord = async (category: Category, language: SupportedLangua
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey });
 
-      // Improved Sub-Categories
-      const subCategories: Record<Category, string[]> = {
-          FAMOUS: language === 'es' 
-              ? ["un deportista", "un cantante", "un actor", "un científico", "un personaje de ficción", "un líder histórico"]
-              : ["an athlete", "a singer", "an actor", "a scientist", "a fictional character", "a historical leader"],
-          ANIMALS: language === 'es'
-              ? ["un mamífero", "un ave", "un animal marino", "un reptil", "un insecto"]
-              : ["a mammal", "a bird", "a sea animal", "a reptile", "an insect"],
-          MOVIES: language === 'es'
-              ? ["una película de acción", "una película infantil", "una película de terror", "una comedia"]
-              : ["an action movie", "a kids movie", "a horror movie", "a comedy"],
-          PLACES: language === 'es'
-              ? ["una ciudad famosa", "un país", "un monumento", "un lugar turístico"]
-              : ["a famous city", "a country", "a monument", "a tourist spot"],
-          FOOD: language === 'es'
-              ? ["un postre", "un plato salado", "una fruta", "una bebida"]
-              : ["a dessert", "a savory dish", "a fruit", "a drink"],
-          OBJECTS: language === 'es'
-              ? ["un electrodoméstico", "algo que llevas en el bolsillo", "un mueble", "ropa"]
-              : ["an appliance", "something in your pocket", "furniture", "clothing"]
-      };
-
-      const specificTopic = getSecureRandomItem(subCategories[category] || [category]);
+      const specificConstraint = getRandomConstraint(category, language);
       const randomSeed = Math.floor(Math.random() * 1000000);
 
       const strictInstruction = language === 'es' 
-        ? "Responde SOLO la palabra en ESPAÑOL." 
-        : "Respond ONLY the word in ENGLISH.";
+        ? "Responde SOLO el nombre, sin explicaciones." 
+        : "Respond ONLY the name, no explanations.";
 
+      // We explicitly ask for a 'random' and 'unique' example to discourage repetition
       const contextPrompt = language === 'es' 
-        ? `Dame 1 ejemplo de: ${specificTopic}. ${strictInstruction} Seed: ${randomSeed}`
-        : `Give me 1 example of: ${specificTopic}. ${strictInstruction} Seed: ${randomSeed}`;
+        ? `Dame 1 ejemplo ÚNICO y creativo de: ${category}. Condición obligatoria: ${specificConstraint}. ${strictInstruction} Seed: ${randomSeed}`
+        : `Give me 1 UNIQUE and creative example of: ${category}. Mandatory constraint: ${specificConstraint}. ${strictInstruction} Seed: ${randomSeed}`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: contextPrompt,
         config: {
-            maxOutputTokens: 20, // Limit output size for speed
-            temperature: 0.9,
+            maxOutputTokens: 25, 
+            temperature: 1.1, // Higher temperature for more variety
         }
       });
 
