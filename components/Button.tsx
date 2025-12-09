@@ -12,13 +12,18 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props 
 }) => {
-  const baseStyles = "px-6 py-3 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg";
+  // Base styles: Glassy feel, smooth transition, proper font weight
+  const baseStyles = "relative px-6 py-4 rounded-xl font-bold transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 overflow-hidden";
   
   const variants = {
-    primary: "bg-game-primary text-game-dark hover:bg-blue-400 shadow-blue-900/20",
-    secondary: "bg-game-card text-white hover:bg-slate-700 border border-slate-600",
-    danger: "bg-game-danger text-white hover:bg-red-400 shadow-red-900/20",
-    ghost: "bg-transparent text-gray-400 hover:text-white shadow-none",
+    // Primary: Modern Gradient with glow
+    primary: "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 border border-white/10",
+    // Secondary: Glassmorphism
+    secondary: "bg-white/5 backdrop-blur-md text-gray-200 hover:bg-white/10 border border-white/10 shadow-sm",
+    // Danger: Red gradient
+    danger: "bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg shadow-red-500/30 hover:shadow-red-500/50 border border-white/10",
+    // Ghost: Minimal
+    ghost: "bg-transparent text-gray-400 hover:text-white hover:bg-white/5",
   };
 
   return (
@@ -26,6 +31,7 @@ export const Button: React.FC<ButtonProps> = ({
       className={`${baseStyles} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
+      {/* Subtle shine effect on hover could go here, but keeping it CSS clean */}
       {children}
     </button>
   );

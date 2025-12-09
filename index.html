@@ -15,22 +15,24 @@
     <meta name="apple-mobile-web-app-title" content="Impostor">
     
     <!-- Mobile Chrome/Safari Theme Color (Matches game background) -->
-    <meta name="theme-color" content="#1a1b26">
+    <meta name="theme-color" content="#0f172a">
     
     <!-- Social Meta Tags -->
     <meta name="description" content="Juego impostor hecho por mi." />
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Impostor</title>
+    
+    <!-- Google Fonts: Inter for professional typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
     <script>
       // CRITICAL FIX FOR VERCEL/PRODUCTION:
-      // Robust polyfill for Node.js 'process' object to prevent "process is not defined" crashes.
-      // This runs before any other script.
       window.process = window.process || {};
       window.process.env = window.process.env || {};
       window.process.cwd = window.process.cwd || function() { return '/'; };
-      
-      // Default to empty string to prevent access errors if keys are checked
       if (!window.process.env.API_KEY) {
         window.process.env.API_KEY = '';
       }
@@ -40,29 +42,44 @@
       tailwind.config = {
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
             colors: {
               game: {
-                dark: '#1a1b26',
-                card: '#24283b',
-                primary: '#7aa2f7',
-                accent: '#bb9af7',
-                danger: '#f7768e',
-                success: '#9ece6a',
-                surface: '#1f2335',
+                dark: '#0f172a', // Slate 900
+                card: 'rgba(30, 41, 59, 0.7)', // Glassy Slate
+                primary: '#6366f1', // Indigo 500
+                accent: '#8b5cf6', // Violet 500
+                danger: '#ef4444', // Red 500
+                success: '#10b981', // Emerald 500
               }
             },
             transitionTimingFunction: {
-              'card': 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Custom bezier for snappy feel
+              'card': 'cubic-bezier(0.4, 0.0, 0.2, 1)', 
             },
             animation: {
               'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
               'bounce-slow': 'bounce 2s infinite',
               'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'blob': 'blob 7s infinite',
+              'scan': 'scan 2s linear infinite',
             },
             keyframes: {
               slideUp: {
                 '0%': { opacity: '0', transform: 'translateY(40px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              blob: {
+                "0%": { transform: "translate(0px, 0px) scale(1)" },
+                "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                "100%": { transform: "translate(0px, 0px) scale(1)" }
+              },
+              scan: {
+                "0%": { top: "0%", opacity: "0" },
+                "50%": { opacity: "1" },
+                "100%": { top: "100%", opacity: "0" }
               }
             }
           }
@@ -71,29 +88,49 @@
     </script>
     <style>
       body {
-        background-color: #1a1b26;
-        color: #c0caf5;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+        background-color: #0f172a;
+        color: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
       }
+      
+      /* Dynamic Background Mesh */
+      .bg-mesh-gradient {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        overflow: hidden;
+        background: #0f172a;
+      }
+      .mesh-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        animation: blob 10s infinite;
+      }
+      .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; animation-delay: 0s; }
+      .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #7c3aed; animation-delay: 2s; }
+      .orb-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #db2777; opacity: 0.2; animation-delay: 4s; }
+
       .perspective-1000 {
         perspective: 1000px;
       }
-      /* Custom scrollbar for player list */
+      /* Custom scrollbar */
       .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
+        width: 4px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
-        background: #1a1b26; 
+        background: transparent; 
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #414868; 
+        background: rgba(255,255,255,0.1); 
         border-radius: 10px;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #565f89; 
-      }
-      /* Stagger delays for animations */
       .delay-100 { animation-delay: 100ms; }
       .delay-200 { animation-delay: 200ms; }
       .delay-300 { animation-delay: 300ms; }
@@ -111,11 +148,17 @@
 </script>
 </head>
   <body>
+    <!-- Background Animation Layer -->
+    <div class="bg-mesh-gradient">
+      <div class="mesh-orb orb-1"></div>
+      <div class="mesh-orb orb-2"></div>
+      <div class="mesh-orb orb-3"></div>
+    </div>
+
     <div id="root"></div>
-    <!-- CRITICAL: Entry point for Vite/React App -->
+    
     <script type="module" src="/index.tsx"></script>
     
-    <!-- PWA Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
