@@ -68,7 +68,7 @@ export const Card: React.FC<CardProps> = ({ onReveal, frontContent, backContent,
 
         {/* --- FRONT LAYER (The Cover) --- */}
         <div 
-            className={`absolute inset-0 w-full h-full rounded-3xl z-10 flex flex-col items-center justify-between p-6 cursor-grab active:cursor-grabbing shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-600 ${!isDragging ? 'transition-transform duration-300 cubic-bezier(0.2, 0.8, 0.2, 1)' : ''}`}
+            className={`absolute inset-0 w-full h-full rounded-3xl z-10 flex flex-col items-center justify-between p-6 cursor-grab active:cursor-grabbing shadow-2xl bg-gradient-to-br from-indigo-600 to-blue-600 touch-none ${!isDragging ? 'transition-transform duration-300 cubic-bezier(0.2, 0.8, 0.2, 1)' : ''}`}
             style={{ 
                 transform: `translateY(${offsetY}px)`,
             }}
