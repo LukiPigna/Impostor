@@ -92,6 +92,8 @@ export default function App() {
   // Anti-Repetition
   const [previousImpostorIds, setPreviousImpostorIds] = useState<string[]>([]);
   const [impostorStreak, setImpostorStreak] = useState<number>(0);
+  // Session Memory for words to prevent repetition
+  const [usedWords, setUsedWords] = useState<string[]>([]);
 
   const [impostorCount, setImpostorCount] = useState(1);
   const [hasPeeked, setHasPeeked] = useState(false);
@@ -197,7 +199,7 @@ export default function App() {
     // Take the first N indices as candidates
     let selectedIndices = shuffledIndices.slice(0, impostorCount);
 
-    // Anti-Repetition Logic
+    // Anti-Repetition Logic for Impostor Role
     if (impostorCount === 1 && previousImpostorIds.length === 1) {
         const candidateId = turnOrderPlayers[selectedIndices[0]].id;
         const lastImpostorId = previousImpostorIds[0];
@@ -249,8 +251,11 @@ export default function App() {
 
     if (mode === GameMode.AI && category) {
       setStage(GameStage.LOADING_AI);
-      const word = await generateWord(category, language);
+      // Pass the usedWords history to the generator to avoid repetition
+      const word = await generateWord(category, language, usedWords);
       setSecretWord(word);
+      // Add the new word to history
+      setUsedWords(prev => [...prev, word]);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.AMONG_US) {
        // Secret word is a random player name
@@ -313,6 +318,8 @@ export default function App() {
     setTransitionNextName(null);
     setHasPeeked(false);
     setStartingPlayerIndex(0);
+    // We intentionally DO NOT clear setUsedWords here so history persists 
+    // if they play another round immediately.
   };
 
   // --- RENDERERS ---
