@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wand2, Smartphone, EyeOff, Check, Crown, Minus, ArrowRight, RotateCcw, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost } from 'lucide-react';
+import { Plus, Trash2, Wand2, EyeOff, Check, Crown, Minus, RotateCcw, Clapperboard, MapPin, Utensils, Box, Cat, Users, Timer, Ghost, Fingerprint } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord } from './services/geminiService';
 import { Button } from './components/Button';
@@ -45,7 +45,7 @@ export default function App() {
 
   const [newPlayerName, setNewPlayerName] = useState('');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-  // State to hold the name of the NEXT player instantly during card flip transition
+  // State to hold the name of the NEXT player instantly during card transition
   const [transitionNextName, setTransitionNextName] = useState<string | null>(null);
 
   const [secretWord, setSecretWord] = useState<string>('');
@@ -56,7 +56,7 @@ export default function App() {
   const [impostorStreak, setImpostorStreak] = useState<number>(0);
 
   const [impostorCount, setImpostorCount] = useState(1);
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [hasPeeked, setHasPeeked] = useState(false); // Replaces isCardFlipped
   const [customWords, setCustomWords] = useState<string[]>([]);
   const [customInputIndex, setCustomInputIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -256,8 +256,9 @@ export default function App() {
       setTransitionNextName(null);
     }
 
-    setIsCardFlipped(false);
+    setHasPeeked(false);
     
+    // Smooth transition: Wait for UI update before index swap
     setTimeout(() => {
       if (currentPlayerIndex < players.length - 1) {
         setCurrentPlayerIndex(prev => prev + 1);
@@ -266,7 +267,7 @@ export default function App() {
         setStage(GameStage.PLAYING);
         setTransitionNextName(null);
       }
-    }, 700); 
+    }, 400); 
   };
 
   const resetGame = () => {
@@ -276,7 +277,7 @@ export default function App() {
     setImpostorIds([]);
     setCurrentPlayerIndex(0);
     setTransitionNextName(null);
-    setIsCardFlipped(false);
+    setHasPeeked(false);
     setStartingPlayerIndex(0);
     // Note: previousImpostorIds & streak persist
   };
@@ -310,7 +311,7 @@ export default function App() {
     const maxImpostors = Math.max(1, Math.floor(players.length / 2));
     
     return (
-      <div className="max-w-md mx-auto w-full space-y-4 animate-fade-in relative min-h-full flex flex-col justify-center pb-4">
+      <div className="max-w-md mx-auto w-full space-y-4 animate-slide-up relative min-h-full flex flex-col justify-center pb-4">
         <div className="absolute top-0 right-0 z-10">
            <LanguageSwitcher />
         </div>
@@ -340,8 +341,12 @@ export default function App() {
             {players.length === 0 && (
               <p className="text-center text-gray-600 py-8 italic text-sm">{t.noPlayers}</p>
             )}
-            {players.map(player => (
-              <div key={player.id} className="flex justify-between items-center bg-game-dark/50 p-3 rounded-lg border border-white/5 animate-fade-in hover:bg-game-dark/80 transition-colors">
+            {players.map((player, idx) => (
+              <div 
+                key={player.id} 
+                className="flex justify-between items-center bg-game-dark/50 p-3 rounded-lg border border-white/5 animate-slide-up hover:bg-game-dark/80 transition-colors"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
                 <span className="font-medium text-gray-200">{player.name}</span>
                 <button 
                   onClick={() => removePlayer(player.id)}
@@ -355,7 +360,7 @@ export default function App() {
 
           {/* Impostor Count */}
           {players.length >= MIN_PLAYERS && (
-             <div className="flex items-center justify-between bg-game-dark/30 p-3 rounded-xl border border-white/5 mt-2">
+             <div className="flex items-center justify-between bg-game-dark/30 p-3 rounded-xl border border-white/5 mt-2 animate-slide-up delay-200">
                 <div className="flex flex-col">
                     <span className="text-gray-200 font-bold text-sm">{t.numImpostors}</span>
                     <span className="text-gray-500 text-xs">{t.recommended}: {Math.ceil(players.length / 5)}</span>
@@ -381,7 +386,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="space-y-3 shrink-0">
+        <div className="space-y-3 shrink-0 animate-slide-up delay-300">
           <Button 
             fullWidth 
             onClick={startGameSetup} 
@@ -399,7 +404,7 @@ export default function App() {
   };
 
   const renderModeSelect = () => (
-    <div className="max-w-md mx-auto w-full space-y-4 text-center animate-fade-in pt-6">
+    <div className="max-w-md mx-auto w-full space-y-4 text-center animate-slide-up pt-6">
        <div className="flex justify-between items-center px-2 mb-2">
          <h2 className="text-3xl font-black text-white">{t.chooseMode}</h2>
          <LanguageSwitcher />
@@ -409,7 +414,7 @@ export default function App() {
        <button 
         onClick={() => handleModeSelection(GameMode.AI)}
         disabled={isLoading}
-        className="w-full bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-accent hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+        className="w-full bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-accent hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden animate-slide-up delay-100"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
            <Wand2 size={70} />
@@ -427,7 +432,7 @@ export default function App() {
        <button 
         onClick={() => handleModeSelection(GameMode.AMONG_US)}
         disabled={isLoading}
-        className="w-full bg-gradient-to-br from-red-900/40 to-orange-900/40 p-5 rounded-2xl border border-white/10 hover:border-game-danger hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+        className="w-full bg-gradient-to-br from-red-900/40 to-orange-900/40 p-5 rounded-2xl border border-white/10 hover:border-game-danger hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden animate-slide-up delay-200"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
            <Ghost size={70} />
@@ -445,7 +450,7 @@ export default function App() {
        <button 
         onClick={() => handleModeSelection(GameMode.CUSTOM)}
         disabled={isLoading}
-        className="w-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-primary hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden"
+        className="w-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 rounded-2xl border border-white/10 hover:border-game-primary hover:bg-white/5 transition-all hover:scale-[1.02] group text-left relative overflow-hidden animate-slide-up delay-300"
        >
          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity rotate-12">
            <Users size={70} />
@@ -459,7 +464,7 @@ export default function App() {
          </p>
        </button>
 
-       <div className="pt-2">
+       <div className="pt-2 animate-slide-up delay-300">
           <Button variant="ghost" onClick={() => setStage(GameStage.SETUP)}>{t.back}</Button>
        </div>
     </div>
@@ -476,15 +481,16 @@ export default function App() {
     ];
 
     return (
-      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in pt-6">
+      <div className="max-w-md mx-auto w-full space-y-6 animate-slide-up pt-6">
         <h2 className="text-3xl font-black text-white text-center">{t.categories.title}</h2>
         
         <div className="grid grid-cols-2 gap-4">
-          {categories.map((cat) => (
+          {categories.map((cat, idx) => (
             <button
               key={cat.id}
               onClick={() => prepareGameLogic(GameMode.AI, cat.id)}
-              className="bg-game-card hover:bg-game-primary/20 border border-white/5 hover:border-game-primary p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-105"
+              className="bg-game-card hover:bg-game-primary/20 border border-white/5 hover:border-game-primary p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-105 animate-slide-up"
+              style={{ animationDelay: `${idx * 50}ms` }}
             >
               <div className="text-game-primary">{cat.icon}</div>
               <span className="font-bold text-gray-200">{cat.label}</span>
@@ -492,7 +498,7 @@ export default function App() {
           ))}
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 animate-slide-up delay-300">
           <Button variant="ghost" fullWidth onClick={() => setStage(GameStage.MODE_SELECT)}>{t.back}</Button>
         </div>
       </div>
@@ -502,7 +508,7 @@ export default function App() {
   const renderCustomInput = () => {
     const currentPlayer = players[customInputIndex];
     return (
-      <div className="max-w-md mx-auto w-full space-y-6 animate-fade-in pt-10">
+      <div className="max-w-md mx-auto w-full space-y-6 animate-slide-up pt-10">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-game-primary">{t.passPhone(currentPlayer.name)}</h2>
           <p className="text-gray-400 text-sm">{t.hideInput}</p>
@@ -545,37 +551,13 @@ export default function App() {
     // Check if we are in transition state to show next player name or current
     const displayNextName = transitionNextName;
     const isLastPlayer = currentPlayerIndex >= players.length - 1;
-    const displayName = displayNextName || player?.name;
 
-    // Logic to determine front title
-    let frontTitle = "";
-    if (displayNextName) {
-        // If we are transitioning (card flipping down)
-        frontTitle = t.passPhone(displayNextName);
-    } else if (isCardFlipped) {
-        // If card is open, we don't care about front much, but logical consistency
-        frontTitle = t.passPhone(player.name);
-    } else {
-         // Default state
-        frontTitle = t.passPhone(player.name);
-    }
-
-    // Special case for end of round transition
-    if (displayNextName === null && isCardFlipped && isLastPlayer && transitionNextName === null) {
-        // We are on last player and card is open. Next click will start game.
-        // We don't change frontTitle here because we are about to unmount or change stage
-    } else if (transitionNextName === null && !isCardFlipped && !player) {
-         // Fallback
-         frontTitle = t.allReady;
-    }
-
-
-    // Content for the card back (Revealed state)
+    // Content for the card back (Revealed/Secret Layer)
     const cardBackContent = (
-      <div className="flex flex-col items-center justify-center h-full space-y-4 animate-fade-in">
+      <div className="flex flex-col items-center justify-center h-full space-y-4 animate-fade-in select-none">
         {isCurrentUserImpostor ? (
           <>
-            <div className="w-20 h-20 bg-game-danger/20 rounded-full flex items-center justify-center text-game-danger mb-2 animate-bounce">
+            <div className="w-20 h-20 bg-game-danger/20 rounded-full flex items-center justify-center text-game-danger mb-2">
               <EyeOff size={40} />
             </div>
             <h2 className="text-2xl font-black text-game-danger uppercase tracking-widest">{t.impostorRole}</h2>
@@ -590,7 +572,7 @@ export default function App() {
               <Check size={40} />
             </div>
             <h3 className="text-gray-500 font-bold uppercase text-xs tracking-widest">{t.secretWordIs}</h3>
-            <h2 className="text-3xl font-black text-game-dark mt-2 break-words w-full px-2">{secretWord}</h2>
+            <h2 className="text-3xl font-black text-game-dark mt-2 break-words w-full px-2 leading-tight">{secretWord}</h2>
             <div className="px-4 py-2 bg-game-success/10 rounded-lg text-game-success text-sm font-bold mt-2">
               {t.findImpostor}
             </div>
@@ -599,21 +581,18 @@ export default function App() {
       </div>
     );
 
-    // Content for the card front (Hidden state)
+    // Content for the card front (Cover Layer)
     const cardFrontContent = (
       <div className="flex flex-col items-center justify-center space-y-4">
-        <div className="relative">
-             <Smartphone size={80} className="text-white opacity-80" />
-             <div className="absolute -bottom-2 -right-2 bg-white text-game-primary rounded-full p-1 shadow-lg animate-pulse">
-                <ArrowRight size={20} />
-             </div>
+        <div className="relative animate-pulse opacity-20">
+             <Fingerprint size={120} className="text-white" />
         </div>
         <div className="text-center">
             {/* Logic: If we are transitioning, show next name. If not, show current name */}
-            <h3 className="text-2xl font-bold text-white mb-1">
+            <h3 className="text-3xl font-black text-white mb-2 drop-shadow-md">
                 {transitionNextName ? t.passPhone(transitionNextName) : (player ? t.passPhone(player.name) : t.allReady)}
             </h3>
-            <p className="text-white/60 text-sm">{t.tapToReveal}</p>
+            <p className="text-white/70 text-sm uppercase tracking-wider font-bold">{t.tapToReveal}</p>
         </div>
       </div>
     );
@@ -628,20 +607,19 @@ export default function App() {
         
         <div className="mb-8">
             <Card 
-                isFlipped={isCardFlipped} 
-                onFlip={() => !isCardFlipped && setIsCardFlipped(true)}
+                onReveal={() => setHasPeeked(true)}
+                isResetting={!!transitionNextName} // Reset position when moving to next player
                 frontContent={cardFrontContent}
                 backContent={cardBackContent}
-                locked={isCardFlipped}
             />
         </div>
 
         <div className="h-16 w-full max-w-xs flex items-center justify-center transition-opacity duration-300">
-            {isCardFlipped ? (
+            {hasPeeked ? (
                  <Button 
                     fullWidth 
                     onClick={handleNextPlayer}
-                    className="animate-fade-in shadow-xl"
+                    className="animate-slide-up shadow-xl bg-game-primary text-game-dark hover:bg-blue-400 border-none font-black tracking-wide"
                  >
                     {currentPlayerIndex < players.length - 1 ? t.nextPlayer : t.startGame}
                  </Button>
@@ -660,7 +638,7 @@ export default function App() {
     const startingPlayer = players[startingPlayerIndex];
     
     return (
-      <div className="max-w-md mx-auto w-full text-center space-y-6 animate-fade-in pt-6">
+      <div className="max-w-md mx-auto w-full text-center space-y-6 animate-slide-up pt-6">
           {/* Timer */}
           <div className="flex justify-center mb-2">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${timeLeft < 30 ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-game-card border-white/10 text-game-primary'}`}>
@@ -674,7 +652,7 @@ export default function App() {
               <p className="text-xl text-gray-300">{t.discussDesc(impostorCount)}</p>
           </div>
 
-          <div className="bg-gradient-to-r from-game-primary/20 to-purple-500/20 p-1 rounded-2xl">
+          <div className="bg-gradient-to-r from-game-primary/20 to-purple-500/20 p-1 rounded-2xl animate-slide-up delay-100">
               <div className="bg-game-dark/90 p-6 rounded-xl border border-game-primary/30 flex flex-col items-center gap-2">
                   <p className="text-game-primary text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                     <Crown size={14} /> {t.firstPlayer}
@@ -686,7 +664,7 @@ export default function App() {
               </div>
           </div>
 
-          <div className="bg-game-card p-6 rounded-2xl border border-white/5 text-left space-y-3">
+          <div className="bg-game-card p-6 rounded-2xl border border-white/5 text-left space-y-3 animate-slide-up delay-200">
               <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">{t.alivePlayers}</h3>
               <div className="flex flex-wrap gap-2">
                   {players.map(p => (
@@ -697,7 +675,7 @@ export default function App() {
               </div>
           </div>
 
-          <Button variant="danger" fullWidth onClick={() => setStage(GameStage.REVEAL)} className="py-4 text-lg">
+          <Button variant="danger" fullWidth onClick={() => setStage(GameStage.REVEAL)} className="py-4 text-lg animate-slide-up delay-300">
               {t.revealBtn(impostorCount)}
           </Button>
       </div>
@@ -705,7 +683,7 @@ export default function App() {
   };
 
   const renderReveal = () => (
-    <div className="max-w-md mx-auto w-full text-center space-y-8 animate-fade-in pt-10">
+    <div className="max-w-md mx-auto w-full text-center space-y-8 animate-slide-up pt-10">
         <div className="space-y-2">
             <h2 className="text-3xl font-black text-white">{t.gameOver}</h2>
             <p className="text-gray-400">{t.secretWas}</p>
@@ -715,14 +693,15 @@ export default function App() {
         </div>
 
         <div className="space-y-3">
-            {players.map(p => (
+            {players.map((p, idx) => (
                 <div 
                     key={p.id} 
-                    className={`flex items-center justify-between p-4 rounded-xl border ${
+                    className={`flex items-center justify-between p-4 rounded-xl border animate-slide-up ${
                         p.isImpostor 
                         ? 'bg-game-danger/10 border-game-danger/50' 
                         : 'bg-game-card border-white/5'
                     }`}
+                    style={{ animationDelay: `${idx * 100}ms` }}
                 >
                     <span className={`font-bold text-lg ${p.isImpostor ? 'text-white' : 'text-gray-300'}`}>
                         {p.name}
@@ -740,7 +719,7 @@ export default function App() {
             ))}
         </div>
 
-        <Button fullWidth onClick={resetGame} className="py-4 gap-2 flex items-center justify-center">
+        <Button fullWidth onClick={resetGame} className="py-4 gap-2 flex items-center justify-center animate-slide-up delay-300">
             <RotateCcw size={20} /> {t.playAgain}
         </Button>
     </div>

@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <!-- Updated Vector Favicon (Hat and Glasses) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%231a1b26%22 rx=%2220%22/><path d=%22M35 25 L55 25 L60 40 L30 40 Z%22 fill=%22%237aa2f7%22 /><circle cx=%2235%22 cy=%2255%22 r=%2210%22 fill=%22%231a1b26%22 stroke=%22%237aa2f7%22 stroke-width=%223%22 /><circle cx=%2255%22 cy=%2255%22 r=%2210%22 fill=%22%231a1b26%22 stroke=%22%237aa2f7%22 stroke-width=%223%22 /><line x1=%2245%22 y1=%2255%22 x2=%2245%22 y2=%2255%22 stroke=%22%237aa2f7%22 stroke-width=%222%22 /></svg>">
+    <link rel="icon" href="/icon-192.png?v=5">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="manifest" href="/manifest.json">
     
     <!-- iOS Support -->
-    <link rel="apple-touch-icon" href="icon-192.png?v=3">
+    <link rel="apple-touch-icon" href="/icon-192.png?v=5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Impostor">
@@ -48,19 +48,20 @@
                 accent: '#bb9af7',
                 danger: '#f7768e',
                 success: '#9ece6a',
+                surface: '#1f2335',
               }
             },
             transitionTimingFunction: {
               'card': 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Custom bezier for snappy feel
             },
             animation: {
-              'flip': 'flip 0.7s cubic-bezier(0.4, 0.0, 0.2, 1) preserve-3d',
-              'fade-in': 'fadeIn 0.5s ease-out',
-              'bounce': 'bounce 1s infinite',
+              'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+              'bounce-slow': 'bounce 2s infinite',
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             },
             keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(40px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
               }
             }
@@ -78,19 +79,6 @@
       .perspective-1000 {
         perspective: 1000px;
       }
-      .transform-style-3d {
-        transform-style: preserve-3d;
-      }
-      /* Ensure the card flip transition uses the custom smoother timing */
-      .transform-card {
-        transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1);
-      }
-      .backface-hidden {
-        backface-visibility: hidden;
-      }
-      .rotate-y-180 {
-        transform: rotateY(180deg);
-      }
       /* Custom scrollbar for player list */
       .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
@@ -105,6 +93,10 @@
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #565f89; 
       }
+      /* Stagger delays for animations */
+      .delay-100 { animation-delay: 100ms; }
+      .delay-200 { animation-delay: 200ms; }
+      .delay-300 { animation-delay: 300ms; }
     </style>
   <script type="importmap">
 {
