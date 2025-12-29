@@ -1,6 +1,5 @@
 import { SupportedLanguage, Category } from "../types";
 
-// Helper for crypto-random selection from arrays
 const getSecureRandomItem = <T>(array: T[]): T | null => {
   if (array.length === 0) return null;
   const randomBuffer = new Uint32Array(1);
@@ -9,133 +8,80 @@ const getSecureRandomItem = <T>(array: T[]): T | null => {
   return array[randomIndex];
 };
 
-// Bilingual Fallback database
 const BACKUPS: Record<SupportedLanguage, Record<string, string[]>> = {
   en: {
-    FAMOUS: ["Taylor Swift", "Elon Musk", "Batman", "Marilyn Monroe", "Albert Einstein", "Michael Jackson", "Harry Potter", "Barack Obama", "Leonardo DiCaprio", "Queen Elizabeth", "Messi", "Ronaldo", "Beyonce", "Trump", "Steve Jobs", "Tom Cruise", "Oprah", "Will Smith"],
-    ANIMALS: ["Giraffe", "Penguin", "Lion", "Elephant", "Platypus", "Kangaroo", "Dolphin", "Panda", "Koala", "Octopus", "Shark", "Eagle", "Tiger", "Gorilla", "Wolf", "Zebra", "Owl", "Bear"],
-    MOVIES: ["Titanic", "Star Wars", "Harry Potter", "The Matrix", "Frozen", "Avatar", "The Lion King", "Jurassic Park", "Inception", "The Avengers", "Shrek", "Spider-Man", "Joker", "Toy Story", "Gladiator", "Finding Nemo"],
-    PLACES: ["Paris", "Tokyo", "New York", "Egypt", "Mars", "London", "Hawaii", "The Great Wall of China", "Rome", "Sydney", "Dubai", "Las Vegas", "Antarctica", "Amazon Rainforest", "Mount Everest"],
-    FOOD: ["Pizza", "Sushi", "Tacos", "Ice Cream", "Hamburger", "Spaghetti", "Pancakes", "Chocolate", "Steak", "Donuts", "Burrito", "Fried Chicken", "Popcorn", "Hot Dog", "Salad", "Croissant"],
-    OBJECTS: ["iPhone", "Umbrella", "Piano", "Toothbrush", "Chair", "Laptop", "Bicycle", "Headphones", "Camera", "Watch", "Shoe", "Book", "Lamp", "Backpack", "Sunglasses", "Key"],
-    SONGS: ["Bohemian Rhapsody", "Thriller", "Imagine", "Shape of You", "Blinding Lights", "Smells Like Teen Spirit", "Billie Jean", "Hey Jude", "Stayin' Alive", "Wonderwall", "Rolling in the Deep", "Bad Guy", "Havana", "Despacito", "Uptown Funk"]
+    INTERNET: ["Rickroll", "Doge", "TikTok", "MrBeast", "Skibidi Toilet", "Discord", "Fortnite", "Minecraft", "Trollface"],
+    VILLAINS: ["Joker", "Thanos", "Darth Vader", "Voldemort", "Scar", "Hannibal Lecter", "Cruella", "The Riddler", "Green Goblin"],
+    NOSTALGIA: ["Game Boy", "Tamagotchi", "Walkman", "Blockbuster", "MSN Messenger", "Pac-Man", "iPod Nano", "Cassette"],
+    LEGENDS: ["Michael Jordan", "Mike Tyson", "Muhammad Ali", "Messi", "Cristiano Ronaldo", "Serena Williams", "Tiger Woods"],
+    ANIME: ["Pikachu", "Goku", "Naruto", "Sailor Moon", "Luffy", "Spirited Away", "Death Note", "Totoro"],
+    GADGETS: ["iPhone 1", "Tesla", "VR Glasses", "Drone", "Apple Watch", "Hoverboard", "Nintendo Switch"]
   },
   es: {
-    FAMOUS: ["Lionel Messi", "Shakira", "Batman", "Frida Kahlo", "Einstein", "Bad Bunny", "El Chavo del 8", "Picasso", "Maradona", "Jennifer Lopez", "Cristiano Ronaldo", "Papa Francisco", "Will Smith", "Harry Potter", "Goku", "Iron Man", "Luis Miguel", "Mirtha Legrand"],
-    ANIMALS: ["Jirafa", "Pingüino", "León", "Elefante", "Ornitorrinco", "Canguro", "Delfín", "Oso Panda", "Lama", "Tiburón", "Águila", "Tigre", "Gorila", "Lobo", "Cebra", "Búho", "Oso Polar", "Hipopótamo"],
-    MOVIES: ["Titanic", "Star Wars", "Harry Potter", "Matrix", "Frozen", "El Rey León", "Jurassic Park", "Toy Story", "Avengers", "Coco", "Shrek", "Spiderman", "El Padrino", "Volver al Futuro", "Buscando a Nemo", "Mi Pobre Angelito"],
-    PLACES: ["París", "Tokio", "Nueva York", "Egipto", "Marte", "Roma", "Machu Picchu", "La Muralla China", "Buenos Aires", "Madrid", "Brasil", "Cancún", "Disney", "Las Vegas", "Torre Eiffel", "Cataratas del Iguazú"],
-    FOOD: ["Pizza", "Sushi", "Tacos", "Helado", "Hamburguesa", "Paella", "Empanadas", "Asado", "Milanesa", "Churros", "Mate", "Fernet", "Chocolate", "Papas Fritas", "Ensalada", "Torta"],
-    OBJECTS: ["Celular", "Paraguas", "Piano", "Cepillo de dientes", "Silla", "Computadora", "Bicicleta", "Auriculares", "Reloj", "Lentes", "Zapato", "Libro", "Lámpara", "Mochila", "Llave", "Guitarra"],
-    SONGS: ["Despacito", "Gasolina", "La Bamba", "Bailando", "Tusa", "Entre dos tierras", "La Flaca", "Rayando el sol", "Música Ligera", "Matador", "El muelle de San Blas", "Provenza", "Ojitos Lindos", "La Bachata"]
+    INTERNET: ["Rickroll", "Doge", "TikTok", "Ibai Llanos", "Auronplay", "WhatsApp", "Minecraft", "Instagram", "Stickers"],
+    VILLAINS: ["El Guasón", "Thanos", "Darth Vader", "Voldemort", "Scar", "Cruella de Vil", "Lex Luthor", "Freezer"],
+    NOSTALGIA: ["Game Boy", "Tamagotchi", "Walkman", "Blockbuster", "Fotolog", "MSN Messenger", "Flippers", "Cassette"],
+    LEGENDS: ["Messi", "Maradona", "Manu Ginóbili", "Rafa Nadal", "Pau Gasol", "Sena", "Fangio", "Michael Jordan"],
+    ANIME: ["Pikachu", "Goku", "Naruto", "Caballeros del Zodiaco", "Luffy", "Oliver Atom", "Death Note", "Totoro"],
+    GADGETS: ["iPhone", "Tesla", "Lentes VR", "Dron", "Apple Watch", "Hoverboard", "PlayStation 5", "Alexa"]
   }
 };
 
-const getRandomBackup = (category: Category, language: SupportedLanguage, forbiddenWords: string[]) => {
-  const langBackups = BACKUPS[language] || BACKUPS['en'];
-  const key = category as string;
-  const list = langBackups[key] || langBackups['FAMOUS'];
-  
-  const filtered = list.filter(w => !forbiddenWords.some(fw => fw.toLowerCase() === w.toLowerCase()));
-  const finalSource = filtered.length > 0 ? filtered : list;
-  
-  return getSecureRandomItem(finalSource) || "Error";
+const UNDERCOVER_BACKUPS: Record<SupportedLanguage, [string, string][]> = {
+  en: [["Coca-Cola", "Pepsi"], ["iPhone", "Samsung"], ["Burger King", "McDonald's"], ["Star Wars", "Star Trek"], ["Batman", "Iron Man"], ["Adidas", "Nike"]],
+  es: [["Coca-Cola", "Pepsi"], ["iPhone", "Samsung"], ["Burger King", "McDonald's"], ["Disney+", "Netflix"], ["Mate", "Café"], ["Perro", "Gato"], ["Fútbol", "Básquet"]]
 };
 
-export const generateWord = async (
-  category: Category, 
-  language: SupportedLanguage = 'en',
-  forbiddenWords: string[] = []
-): Promise<string> => {
-  const timeoutPromise = new Promise<string>((resolve) => {
-    setTimeout(() => {
-      resolve(getRandomBackup(category, language, forbiddenWords));
-    }, 3500);
-  });
+const SONGS_BACKUPS: Record<SupportedLanguage, [string, string][]> = {
+  en: [["Thriller", "Bad"], ["Bohemian Rhapsody", "Don't Stop Me Now"], ["Imagine", "Let It Be"], ["Shape of You", "Perfect"]],
+  es: [["La Morocha", "Hola Perdida"], ["Despacito", "Gasolina"], ["De Música Ligera", "Persiana Americana"], ["Matador", "Vasos Vacíos"], ["Provenza", "Tusa"]]
+};
 
-  const aiRequestPromise = (async (): Promise<string> => {
-    try {
-      const apiKey = process.env.API_KEY;
-      if (!apiKey) return getRandomBackup(category, language, forbiddenWords);
+export const generateWord = async (category: Category, language: SupportedLanguage, forbidden: string[]): Promise<string> => {
+  try {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) return getSecureRandomItem(BACKUPS[language][category]) || "Error";
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Category: ${category}. Language: ${language}. Give me ONE very specific and famous entity. Avoid generic terms. Just the name.`,
+      config: { temperature: 1.1, maxOutputTokens: 20 }
+    });
+    return response.text.trim().replace(/[".]/g, '') || getSecureRandomItem(BACKUPS[language][category]) || "Error";
+  } catch { return getSecureRandomItem(BACKUPS[language][category]) || "Error"; }
+};
 
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey });
-
-      const constraints = language === 'es' 
-        ? "No repitas estas palabras por favor: " + forbiddenWords.slice(-15).join(", ") 
-        : "Please do not repeat these words: " + forbiddenWords.slice(-15).join(", ");
-
-      const contextPrompt = language === 'es' 
-        ? `Categoría: ${category}. Dame SOLO un ejemplo muy famoso en español. No agregues nada más. ${constraints}`
-        : `Category: ${category}. Give me ONLY one very famous example in English. Do not add anything else. ${constraints}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: contextPrompt,
-        config: { maxOutputTokens: 20, temperature: 1.1 }
-      });
-
-      const text = response.text?.trim().replace(/['".]+/g, '') || "";
-      if (forbiddenWords.some(fw => fw.toLowerCase() === text.toLowerCase())) return getRandomBackup(category, language, forbiddenWords);
-      return text || getRandomBackup(category, language, forbiddenWords);
-    } catch (error) {
-      return getRandomBackup(category, language, forbiddenWords);
+export const generateDuel = async (type: 'UNDERCOVER' | 'SONGS', language: SupportedLanguage): Promise<{ wordA: string, wordB: string }> => {
+  try {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      const pair = getSecureRandomItem(type === 'SONGS' ? SONGS_BACKUPS[language] : UNDERCOVER_BACKUPS[language])!;
+      return { wordA: pair[0], wordB: pair[1] };
     }
-  })();
+    const { GoogleGenAI, Type } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const systemPrompt = type === 'SONGS'
+      ? `You are a music expert. Provide two very famous and similar songs or artists that people often compare. Language: ${language}.`
+      : `You are a branding expert. Provide two very similar famous brands, characters, or objects (NOT SONGS). Language: ${language}.`;
 
-  return Promise.race([aiRequestPromise, timeoutPromise]);
-};
-
-export const generateDuelWords = async (
-  language: SupportedLanguage = 'en',
-  forbiddenWords: string[] = []
-): Promise<{ wordA: string, wordB: string }> => {
-  const timeoutPromise = new Promise<{ wordA: string, wordB: string }>((resolve) => {
-    setTimeout(() => {
-      const a = getRandomBackup('SONGS', language, forbiddenWords);
-      const b = getRandomBackup('SONGS', language, [...forbiddenWords, a]);
-      resolve({ wordA: a, wordB: b });
-    }, 4000);
-  });
-
-  const aiRequestPromise = (async (): Promise<{ wordA: string, wordB: string }> => {
-    try {
-      const apiKey = process.env.API_KEY;
-      if (!apiKey) throw new Error("No API Key");
-
-      const { GoogleGenAI, Type } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey });
-
-      const constraints = forbiddenWords.slice(-15).join(", ");
-      const prompt = language === 'es' 
-        ? `Dame 2 canciones muy famosas del mismo género pero distintas. Responde en JSON con llaves 'wordA' y 'wordB'. No repitas: ${constraints}`
-        : `Give me 2 very famous songs from the same genre but different. Respond in JSON with keys 'wordA' and 'wordB'. Do not repeat: ${constraints}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              wordA: { type: Type.STRING },
-              wordB: { type: Type.STRING }
-            },
-            required: ["wordA", "wordB"]
-          }
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: "Return a JSON with 'wordA' and 'wordB'.",
+      config: { 
+        systemInstruction: systemPrompt,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { wordA: { type: Type.STRING }, wordB: { type: Type.STRING } },
+          required: ["wordA", "wordB"]
         }
-      });
-
-      const data = JSON.parse(response.text || "{}");
-      if (data.wordA && data.wordB) return data;
-      throw new Error("Invalid response format");
-    } catch (error) {
-      const a = getRandomBackup('SONGS', language, forbiddenWords);
-      const b = getRandomBackup('SONGS', language, [...forbiddenWords, a]);
-      return { wordA: a, wordB: b };
-    }
-  })();
-
-  return Promise.race([aiRequestPromise, timeoutPromise]);
+      }
+    });
+    return JSON.parse(response.text);
+  } catch {
+    const pair = getSecureRandomItem(type === 'SONGS' ? SONGS_BACKUPS[language] : UNDERCOVER_BACKUPS[language])!;
+    return { wordA: pair[0], wordB: pair[1] };
+  }
 };

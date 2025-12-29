@@ -1,67 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Wand2, EyeOff, Check, Crown, Minus, RotateCcw, Clapperboard, MapPin, Utensils, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Plus, Trash2, Wand2, EyeOff, Crown, Minus, RotateCcw, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck, Languages, ChevronLeft, ChevronRight, Zap, Smartphone, Disc, User } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
-import { generateWord, generateDuelWords } from './services/geminiService';
+import { generateWord, generateDuel } from './services/geminiService';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { Logo } from './components/Logo';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
+const MAX_PLAYERS = 12;
 const ROUND_TIME_SECONDS = 180;
 
-// --- HELPERS ---
-const getSecureRandomInt = (max: number): number => {
-  if (max <= 0) return 0;
-  const array = new Uint32Array(1);
-  window.crypto.getRandomValues(array);
-  return array[0] % max;
-};
+const PLAYER_COLORS = [
+  'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  'text-purple-400 bg-purple-500/10 border-purple-500/20',
+  'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  'text-red-400 bg-red-500/10 border-red-500/20',
+  'text-pink-400 bg-pink-500/10 border-pink-500/20',
+  'text-sky-400 bg-sky-500/10 border-sky-500/20',
+  'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+];
 
-function secureShuffle<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = getSecureRandomInt(i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-const vibrate = (ms: number = 15) => {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(ms);
-    }
-};
-
-const CircularTimer = ({ timeLeft, totalTime }: { timeLeft: number, totalTime: number }) => {
-    const radius = 30;
-    const circumference = 2 * Math.PI * radius;
-    const progress = timeLeft / totalTime;
-    const dashoffset = circumference * (1 - progress);
-    const isLowTime = timeLeft < 30;
-
-    return (
-        <div className="relative flex items-center justify-center w-24 h-24 mb-4">
-            <svg className="transform -rotate-90 w-full h-full">
-                <circle cx="50%" cy="50%" r={radius} stroke="rgba(255,255,255,0.1)" strokeWidth="6" fill="transparent" />
-                <circle 
-                    cx="50%" cy="50%" r={radius} 
-                    stroke={isLowTime ? "#ef4444" : "#6366f1"} 
-                    strokeWidth="4" 
-                    fill="transparent"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={dashoffset}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000 ease-linear"
-                />
-            </svg>
-            <div className="absolute flex flex-col items-center">
-                 <span className={`text-xl font-mono font-black ${isLowTime ? 'text-red-400 animate-pulse' : 'text-white'}`}>
-                     {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                 </span>
-            </div>
-        </div>
-    );
+const vibrate = (ms: number = 10) => {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(ms);
 };
 
 export default function App() {
@@ -79,18 +41,16 @@ export default function App() {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [transitionNextName, setTransitionNextName] = useState<string | null>(null);
-
-  const [secretWord, setSecretWord] = useState<string>('');
-  const [secretWordB, setSecretWordB] = useState<string>(''); 
+  const [secretWord, setSecretWord] = useState('');
+  const [secretWordB, setSecretWordB] = useState(''); 
   const [impostorIds, setImpostorIds] = useState<string[]>([]);
-  const [usedWords, setUsedWords] = useState<string[]>([]);
   const [impostorCount, setImpostorCount] = useState(1);
   const [hasPeeked, setHasPeeked] = useState(false);
   const [customWords, setCustomWords] = useState<string[]>([]);
   const [customInputIndex, setCustomInputIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME_SECONDS);
+  const [modeIdx, setModeIdx] = useState(0);
 
   const t = translations[language];
 
@@ -107,434 +67,385 @@ export default function App() {
     return () => clearInterval(interval);
   }, [stage, timeLeft]);
 
-  const addPlayer = () => {
-    if (!newPlayerName.trim()) return;
+  const handleBack = () => {
     vibrate();
-    const newPlayer: Player = { id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false };
-    setPlayers(prev => [newPlayer, ...prev]);
-    setNewPlayerName('');
-  };
-
-  const removePlayer = (id: string) => {
-    vibrate();
-    setPlayers(prev => {
-        const newPlayers = prev.filter(p => p.id !== id);
-        const maxImpostors = Math.max(1, Math.floor(newPlayers.length / 2));
-        if (impostorCount > maxImpostors && newPlayers.length >= MIN_PLAYERS) setImpostorCount(maxImpostors);
-        else if (newPlayers.length < MIN_PLAYERS) setImpostorCount(1);
-        return newPlayers;
-    });
-  };
-
-  const updateImpostorCount = (increment: number) => {
-    vibrate();
-    setImpostorCount(prev => {
-        const max = Math.max(1, Math.floor(players.length / 2));
-        return Math.min(Math.max(1, prev + increment), max);
-    });
-  };
-
-  const handleModeSelection = (mode: GameMode) => {
-    vibrate();
-    setGameMode(mode);
-    if (mode === GameMode.AI) setStage(GameStage.CATEGORY_SELECT);
-    else if (mode === GameMode.AMONG_US) prepareGameLogic(GameMode.AMONG_US);
-    else if (mode === GameMode.SONGS) prepareGameLogic(GameMode.SONGS);
-    else prepareGameLogic(GameMode.CUSTOM);
+    if (stage === GameStage.MODE_SELECT) {
+      setStage(GameStage.SETUP);
+    } else {
+      setStage(GameStage.MODE_SELECT);
+    }
   };
 
   const prepareGameLogic = async (mode: GameMode, category?: Category) => {
-    setIsLoading(true);
-    const shuffledPlayers: Player[] = secureShuffle(players);
-    const indices = Array.from({ length: shuffledPlayers.length }, (_, i) => i);
-    const selectedIndices = secureShuffle(indices).slice(0, impostorCount);
-
-    const newImpostorIds = selectedIndices.map(idx => shuffledPlayers[idx].id);
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+    const selectedIndices = [...Array(shuffled.length).keys()].sort(() => Math.random() - 0.5).slice(0, impostorCount);
+    const newImpostorIds = selectedIndices.map(idx => shuffled[idx].id);
+    
     setImpostorIds(newImpostorIds);
-    setPlayers(shuffledPlayers.map(p => ({ ...p, isImpostor: newImpostorIds.includes(p.id) })));
-    setStartingPlayerIndex(getSecureRandomInt(shuffledPlayers.length));
+    setPlayers(shuffled.map(p => ({ ...p, isImpostor: newImpostorIds.includes(p.id) })));
+    setStartingPlayerIndex(Math.floor(Math.random() * shuffled.length));
     setCurrentPlayerIndex(0);
-    setTransitionNextName(null);
-    setTimeLeft(ROUND_TIME_SECONDS);
+    setHasPeeked(false);
+    setSecretWord('');
+    setSecretWordB('');
 
     if (mode === GameMode.AI && category) {
       setStage(GameStage.LOADING_AI);
-      const word = await generateWord(category, language, usedWords);
+      const word = await generateWord(category, language, []);
       setSecretWord(word);
-      setUsedWords(prev => [...prev, word]);
       setStage(GameStage.DISTRIBUTE);
-    } else if (mode === GameMode.SONGS) {
+    } else if (mode === GameMode.UNDERCOVER || mode === GameMode.SONGS) {
       setStage(GameStage.LOADING_AI);
-      const { wordA, wordB } = await generateDuelWords(language, usedWords);
+      const { wordA, wordB } = await generateDuel(mode === GameMode.SONGS ? 'SONGS' : 'UNDERCOVER', language);
       setSecretWord(wordA);
       setSecretWordB(wordB);
-      setUsedWords(prev => [...prev, wordA, wordB]);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.AMONG_US) {
-       setSecretWord(shuffledPlayers[getSecureRandomInt(shuffledPlayers.length)].name);
-       setStage(GameStage.DISTRIBUTE);
+      setSecretWord(shuffled[Math.floor(Math.random() * shuffled.length)].name);
+      setStage(GameStage.DISTRIBUTE);
     } else {
       setCustomWords([]);
       setCustomInputIndex(0);
       setStage(GameStage.CUSTOM_INPUT);
     }
-    setIsLoading(false);
   };
 
   const handleCustomWordSubmit = (word: string) => {
     vibrate();
     const newWords = [...customWords, word.trim()];
     setCustomWords(newWords);
-    if (customInputIndex < players.length - 1) setCustomInputIndex(prev => prev + 1);
-    else {
-      setSecretWord(newWords[getSecureRandomInt(newWords.length)]);
+    if (customInputIndex < players.length - 1) {
+      setCustomInputIndex(prev => prev + 1);
+    } else {
+      setSecretWord(newWords[Math.floor(Math.random() * newWords.length)]);
       setStage(GameStage.DISTRIBUTE);
     }
   };
 
   const handleNextPlayer = () => {
     vibrate();
-    const nextIdx = currentPlayerIndex + 1;
-    if (nextIdx < players.length) setTransitionNextName(players[nextIdx].name);
-    else setTransitionNextName(null);
-    setHasPeeked(false);
-    setTimeout(() => {
-      if (currentPlayerIndex < players.length - 1) {
-        setCurrentPlayerIndex(prev => prev + 1);
+    if (currentPlayerIndex < players.length - 1) {
+      const nextIdx = currentPlayerIndex + 1;
+      setTransitionNextName(players[nextIdx].name);
+      setTimeout(() => {
+        setCurrentPlayerIndex(nextIdx);
+        setHasPeeked(false);
         setTransitionNextName(null);
-      } else setStage(GameStage.PLAYING);
-    }, 400); 
+      }, 400);
+    } else {
+      setStage(GameStage.PLAYING);
+      setTimeLeft(ROUND_TIME_SECONDS);
+    }
   };
 
-  const resetToSetup = () => {
-    vibrate();
-    setStage(GameStage.SETUP);
-    setSecretWord('');
-    setSecretWordB('');
-    setImpostorIds([]);
-    setCurrentPlayerIndex(0);
-    setHasPeeked(false);
-  };
-
-  const ElegantBackButton = () => (
-    <button 
-        onClick={resetToSetup} 
-        className="flex items-center justify-center w-10 h-10 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/15 transition-all active:scale-90"
-        aria-label={t.back}
-    >
-        <ArrowLeft size={18} />
-    </button>
-  );
-
-  const renderSetup = () => (
-      <div className="max-w-md mx-auto w-full space-y-6 animate-slide-up relative min-h-[100dvh] flex flex-col justify-center pb-12">
-        <div className="absolute top-4 right-0 z-20">
-          <div className="flex bg-black/40 backdrop-blur-md rounded-xl p-1 border border-white/5">
-            {['en', 'es'].map(l => (
-              <button key={l} onClick={() => { vibrate(); setLanguage(l as SupportedLanguage); }} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${language === l ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}>{l.toUpperCase()}</button>
-            ))}
-          </div>
-        </div>
-        
-        <div className="text-center pt-8 flex flex-col items-center shrink-0">
-          <Logo className="w-40 h-auto drop-shadow-[0_0_30px_rgba(99,102,241,0.3)] mx-auto mb-4" />
-          <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10 mb-2">
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{t.setupSubtitle}</p>
-          </div>
-        </div>
-
-        <div className="space-y-6 bg-slate-900/50 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden shrink-0">
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-          
-          <div className="flex gap-3">
-            <input type="text" value={newPlayerName} onChange={e => setNewPlayerName(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPlayer()} placeholder={t.enterName} className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-indigo-500/50 transition-colors text-white placeholder-gray-600 font-medium" />
-            <Button onClick={addPlayer} disabled={!newPlayerName.trim()} className="w-[58px] aspect-square flex items-center justify-center p-0 !rounded-2xl shadow-indigo-500/20"><Plus size={24} /></Button>
-          </div>
-
-          <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar min-h-[140px]">
-            {players.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-32 opacity-20">
-                    <Users size={32} strokeWidth={1.5}/>
-                    <p className="text-xs font-bold mt-2 uppercase tracking-widest">{t.noPlayers}</p>
-                </div>
-            )}
-            {players.map((p, idx) => (
-              <div key={p.id} className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5 animate-slide-up group transition-colors hover:bg-white/10" style={{ animationDelay: `${idx * 40}ms` }}>
-                <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-indigo-500/60 w-4">{players.length - idx}</span>
-                    <span className="font-bold text-gray-200">{p.name}</span>
-                </div>
-                <button onClick={() => removePlayer(p.id)} className="text-gray-600 hover:text-red-400 p-2 transition-colors"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-
-          {players.length >= MIN_PLAYERS && (
-             <div className="bg-black/40 p-5 rounded-2xl border border-white/5 flex items-center justify-between">
-                <div className="flex flex-col">
-                    <span className="text-white font-black text-xs uppercase tracking-widest">{t.numImpostors}</span>
-                    <span className="text-indigo-400/60 text-[10px] font-bold">{t.recommended}: {Math.ceil(players.length / 5)}</span>
-                </div>
-                <div className="flex items-center gap-4 bg-white/5 rounded-xl p-1.5 border border-white/5">
-                   <button onClick={() => updateImpostorCount(-1)} disabled={impostorCount <= 1} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-indigo-400 disabled:opacity-20 transition-all"><Minus size={16} /></button>
-                   <span className="font-black text-lg w-4 text-center text-white">{impostorCount}</span>
-                   <button onClick={() => updateImpostorCount(1)} disabled={impostorCount >= Math.floor(players.length / 2)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-indigo-400 disabled:opacity-20 transition-all"><Plus size={16} /></button>
-                </div>
-             </div>
-          )}
-        </div>
-        
-        <div className="space-y-4">
-            <Button fullWidth onClick={() => { vibrate(); setStage(GameStage.MODE_SELECT); }} disabled={players.length < MIN_PLAYERS} className="py-5 text-lg !rounded-2xl shadow-xl">{players.length < MIN_PLAYERS ? t.needMore : t.continue}</Button>
-            <p className="text-center text-[10px] text-gray-600 font-black uppercase tracking-[0.2em]">{t.minPlayers}</p>
-        </div>
-      </div>
-  );
-
-  const renderModeSelect = () => (
-    <div className="max-w-md mx-auto w-full space-y-6 animate-slide-up pt-8 pb-12 min-h-[100dvh] flex flex-col justify-center">
-       <div className="flex justify-between items-center mb-6 px-4">
-         <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white tracking-tight">{t.chooseMode}</h2>
-            <div className="h-1 w-12 bg-indigo-500 rounded-full"></div>
-         </div>
-         <ElegantBackButton />
-       </div>
-       <div className="grid gap-4">
-       {[
-         { mode: GameMode.AI, icon: <Wand2 />, color: "text-violet-400", label: t.modeAi, desc: t.modeAiDesc },
-         { mode: GameMode.SONGS, icon: <Music />, color: "text-emerald-400", label: t.modeSongs, desc: t.modeSongsDesc },
-         { mode: GameMode.AMONG_US, icon: <Ghost />, color: "text-red-400", label: t.modeAmongUs, desc: t.modeAmongUsDesc },
-         { mode: GameMode.CUSTOM, icon: <Users />, color: "text-indigo-400", label: t.modeCustom, desc: t.modeCustomDesc },
-       ].map((item, idx) => (
-         <button key={item.mode} onClick={() => handleModeSelection(item.mode)} className="w-full bg-slate-900/40 backdrop-blur-xl p-6 rounded-[2rem] border border-white/5 text-left transition-all active:scale-[0.97] shadow-lg group relative overflow-hidden animate-slide-up" style={{ animationDelay: `${idx * 80}ms` }}>
-           <div className={`absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity rotate-12 ${item.color}`}>
-             {React.cloneElement(item.icon as React.ReactElement<any>, { size: 120, strokeWidth: 1 })}
-           </div>
-           <div className="relative z-10">
-                <div className={`${item.color} mb-3 flex items-center gap-2`}>
-                    <div className="p-2 bg-white/5 rounded-xl border border-white/5">{item.icon}</div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Game Mode</span>
-                </div>
-                <h3 className="text-xl font-black text-white mb-2">{item.label}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed font-medium line-clamp-2">{item.desc}</p>
-           </div>
-         </button>
-       ))}
-       </div>
+  const GenericNavbar = ({ title }: { title?: string }) => (
+    <div className="w-full flex justify-between items-center py-2 px-2 shrink-0 h-14">
+      <button onClick={handleBack} className="p-2 bg-white/5 rounded-full border border-white/5 text-gray-400 active:scale-90 transition-all">
+        <ArrowLeft size={16} />
+      </button>
+      {title && <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 text-center flex-1 truncate px-2">{title}</span>}
+      <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="p-2 bg-white/5 rounded-full border border-white/5 text-gray-400 active:scale-90 transition-all">
+        <Languages size={16} />
+      </button>
     </div>
   );
 
-  const renderCategorySelect = () => (
-      <div className="max-w-md mx-auto w-full space-y-8 animate-slide-up pt-8 min-h-[100dvh] flex flex-col justify-center">
-        <div className="flex justify-between items-center px-4">
-            <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white tracking-tight">{t.categories.title}</h2>
-                <div className="h-1 w-12 bg-violet-500 rounded-full"></div>
+  const renderSetup = () => (
+    <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-4 overflow-hidden">
+      <div className="w-full flex justify-between items-center py-4 shrink-0">
+        <div className="w-9" />
+        <Logo className="w-24 h-auto opacity-100" />
+        <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="p-2.5 bg-white/5 rounded-full border border-white/10 text-gray-400 active:scale-90 transition-all backdrop-blur-md">
+          <Languages size={18} />
+        </button>
+      </div>
+      
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Room Header Info */}
+        <div className="flex justify-between items-end mb-4 px-1">
+          <div>
+            <h2 className="text-xl font-black text-white tracking-tight">{language === 'es' ? 'Tu Escuadrón' : 'Your Squad'}</h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{players.length} / {MAX_PLAYERS} {language === 'es' ? 'Jugadores' : 'Players'}</p>
+          </div>
+          {players.length >= MIN_PLAYERS && (
+            <div className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest animate-pulse">
+              {language === 'es' ? 'Listos' : 'Ready'}
             </div>
-            <ElegantBackButton />
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
+
+        {/* Player Input Area */}
+        <div className="relative mb-6">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <User size={16} className="text-gray-500" />
+          </div>
+          <input 
+            type="text" 
+            value={newPlayerName} 
+            onChange={e => setNewPlayerName(e.target.value)} 
+            onKeyDown={e => {
+              if(e.key === 'Enter' && newPlayerName.trim() && players.length < MAX_PLAYERS) {
+                vibrate();
+                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]);
+                setNewPlayerName('');
+              }
+            }} 
+            placeholder={t.enterName} 
+            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-14 py-4 focus:outline-none focus:border-indigo-500/50 text-white text-base font-medium transition-all placeholder:text-gray-600" 
+          />
+          <button 
+            onClick={() => {
+              if(newPlayerName.trim() && players.length < MAX_PLAYERS) {
+                vibrate(); 
+                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]); 
+                setNewPlayerName('');
+              }
+            }} 
+            disabled={!newPlayerName.trim() || players.length >= MAX_PLAYERS} 
+            className="absolute right-2 top-2 bottom-2 w-10 bg-indigo-500 hover:bg-indigo-600 disabled:bg-white/5 disabled:text-gray-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-95"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+
+        {/* Player List */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2 mb-4">
+          {players.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center opacity-20 py-12">
+              <div className="p-8 bg-white/5 rounded-full mb-4 border border-white/5">
+                <Users size={48} strokeWidth={1}/>
+              </div>
+              <p className="text-xs font-black uppercase tracking-widest text-center">{t.noPlayers}</p>
+            </div>
+          ) : (
+            players.map((p, idx) => (
+              <div key={p.id} className="flex justify-between items-center bg-white/[0.03] backdrop-blur-sm p-3.5 rounded-2xl border border-white/5 animate-slide-up group" style={{ animationDelay: `${idx * 50}ms` }}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border ${PLAYER_COLORS[idx % PLAYER_COLORS.length]}`}>
+                    <User size={18} />
+                  </div>
+                  <span className="font-bold text-gray-200 text-sm tracking-tight">{p.name}</span>
+                </div>
+                <button 
+                  onClick={() => { vibrate(); setPlayers(players.filter(x => x.id !== p.id)); }} 
+                  className="text-gray-700 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-xl transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Settings Bar */}
+        {players.length >= MIN_PLAYERS && (
+          <div className="bg-black/40 backdrop-blur-xl p-4 rounded-3xl border border-white/5 flex items-center justify-between mb-4 shadow-2xl">
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">{t.numImpostors}</span>
+              <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                 <span className="text-white font-black text-lg leading-none">{impostorCount}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { vibrate(); setImpostorCount(Math.max(1, impostorCount - 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Minus size={16} /></button>
+              <button onClick={() => { vibrate(); setImpostorCount(Math.min(Math.floor(players.length/2), impostorCount + 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Plus size={16} /></button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0">
+        <Button fullWidth onClick={() => { vibrate(); setStage(GameStage.MODE_SELECT); }} disabled={players.length < MIN_PLAYERS} className="py-4.5 !rounded-2xl text-base shadow-2xl shadow-indigo-500/20">
+          {players.length < MIN_PLAYERS ? t.needMore : t.continue}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderModeSelect = () => {
+    const modes = [
+      { id: GameMode.AI, icon: <Wand2 size={48}/>, color: "text-amber-400", label: t.modeAi, desc: t.modeAiDesc },
+      { id: GameMode.UNDERCOVER, icon: <ShieldCheck size={48}/>, color: "text-blue-400", label: t.modeUndercover, desc: t.modeUndercoverDesc },
+      { id: GameMode.SONGS, icon: <Disc size={48}/>, color: "text-emerald-400", label: t.modeSongs, desc: t.modeSongsDesc },
+      { id: GameMode.AMONG_US, icon: <Ghost size={48}/>, color: "text-red-400", label: t.modeAmongUs, desc: t.modeAmongUsDesc },
+      { id: GameMode.CUSTOM, icon: <Users size={48}/>, color: "text-indigo-400", label: t.modeCustom, desc: t.modeCustomDesc },
+    ];
+
+    const next = () => { vibrate(5); setModeIdx((m) => (m + 1) % modes.length); };
+    const prev = () => { vibrate(5); setModeIdx((m) => (m - 1 + modes.length) % modes.length); };
+
+    return (
+      <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
+        <GenericNavbar title={t.chooseMode} />
+        <div className="flex-1 flex flex-col justify-center items-center relative overflow-hidden">
+          <div className="relative w-full h-80 flex items-center justify-center">
+            {modes.map((mode, i) => {
+              const dist = i - modeIdx;
+              let normalizedDist = dist;
+              if (dist > modes.length / 2) normalizedDist = dist - modes.length;
+              if (dist < -modes.length / 2) normalizedDist = dist + modes.length;
+              const active = normalizedDist === 0;
+              const isFar = Math.abs(normalizedDist) > 1;
+              return (
+                <div 
+                  key={mode.id} 
+                  className={`absolute inset-0 flex flex-col items-center justify-center text-center px-10 transition-all duration-500 ease-out transform 
+                    ${active ? 'opacity-100 scale-100 z-20 pointer-events-auto' : 'opacity-0 scale-75 z-0 pointer-events-none'} 
+                    ${normalizedDist === -1 ? '-translate-x-[70%] opacity-20 scale-90 z-10' : ''} 
+                    ${normalizedDist === 1 ? 'translate-x-[70%] opacity-20 scale-90 z-10' : ''}
+                    ${isFar ? 'translate-y-full' : ''}`}
+                >
+                  <div className={`p-10 bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/5 shadow-2xl mb-8 ${mode.color}`}>{mode.icon}</div>
+                  <h3 className="text-3xl font-black text-white mb-2 tracking-tight leading-tight">{mode.label}</h3>
+                  <p className="text-gray-500 text-xs font-medium leading-relaxed max-w-[200px]">{mode.desc}</p>
+                </div>
+              );
+            })}
+            <button onClick={prev} className="absolute left-0 p-4 text-white/20 hover:text-white active:scale-90 transition-all z-30"><ChevronLeft size={40}/></button>
+            <button onClick={next} className="absolute right-0 p-4 text-white/20 hover:text-white active:scale-90 transition-all z-30"><ChevronRight size={40}/></button>
+          </div>
+          
+          <div className="flex gap-2 mt-4">
+            {modes.map((_, i) => (
+              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === modeIdx ? 'w-6 bg-indigo-500' : 'w-1.5 bg-white/10'}`} />
+            ))}
+          </div>
+        </div>
+        <div className="pt-6"><Button fullWidth onClick={() => { vibrate(); if(modes[modeIdx].id === GameMode.AI) setStage(GameStage.CATEGORY_SELECT); else prepareGameLogic(modes[modeIdx].id); }} className="py-5 !rounded-2xl text-lg shadow-2xl shadow-indigo-500/20">{t.continue}</Button></div>
+      </div>
+    );
+  };
+
+  const renderCategorySelect = () => (
+    <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
+      <GenericNavbar title={t.categories.title} />
+      <div className="flex-1 flex flex-col justify-center py-2">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar pr-0.5">
           {[
-            { id: 'FAMOUS', icon: <Crown size={28} />, label: t.categories.FAMOUS, color: "text-amber-400" },
-            { id: 'ANIMALS', icon: <Cat size={28} />, label: t.categories.ANIMALS, color: "text-emerald-400" },
-            { id: 'MOVIES', icon: <Clapperboard size={28} />, label: t.categories.MOVIES, color: "text-red-400" },
-            { id: 'PLACES', icon: <MapPin size={28} />, label: t.categories.PLACES, color: "text-sky-400" },
-            { id: 'FOOD', icon: <Utensils size={28} />, label: t.categories.FOOD, color: "text-orange-400" },
-            { id: 'OBJECTS', icon: <Box size={28} />, label: t.categories.OBJECTS, color: "text-purple-400" },
-          ].map((cat, idx) => (
-            <button key={cat.id} onClick={() => { vibrate(); prepareGameLogic(GameMode.AI, cat.id as Category); }} className="bg-white/5 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-5 transition-all active:scale-95 shadow-xl animate-slide-up hover:bg-white/10" style={{ animationDelay: `${idx * 40}ms` }}>
-              <div className={`${cat.color} drop-shadow-[0_0_15px_currentColor]`}>{cat.icon}</div>
-              <span className="font-black text-gray-300 text-[10px] uppercase tracking-[0.2em]">{cat.label}</span>
+            { id: 'INTERNET', icon: <Smartphone size={22} />, label: t.categories.INTERNET, color: "text-blue-400" },
+            { id: 'VILLAINS', icon: <Ghost size={22} />, label: t.categories.VILLAINS, color: "text-red-400" },
+            { id: 'NOSTALGIA', icon: <RotateCcw size={22} />, label: t.categories.NOSTALGIA, color: "text-amber-400" },
+            { id: 'LEGENDS', icon: <Crown size={22} />, label: t.categories.LEGENDS, color: "text-emerald-400" },
+            { id: 'ANIME', icon: <Cat size={22} />, label: t.categories.ANIME, color: "text-purple-400" },
+            { id: 'GADGETS', icon: <Box size={22} />, label: t.categories.GADGETS, color: "text-sky-400" },
+          ].map((cat) => (
+            <button key={cat.id} onClick={() => { vibrate(); prepareGameLogic(GameMode.AI, cat.id as Category); }} className="bg-white/5 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95">
+              <div className={cat.color}>{cat.icon}</div>
+              <span className="font-black text-gray-500 text-[9px] uppercase tracking-widest text-center">{cat.label}</span>
             </button>
           ))}
         </div>
       </div>
+    </div>
   );
 
   const renderCustomInput = () => (
-      <div className="max-w-md mx-auto w-full space-y-10 animate-slide-up pt-12 min-h-[100dvh] flex flex-col justify-center">
-        <div className="flex justify-between items-center px-4">
-            <h2 className="text-3xl font-black text-indigo-400 leading-tight pr-4">{t.passPhone(players[customInputIndex].name)}</h2>
-            <ElegantBackButton />
+    <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3">
+      <GenericNavbar />
+      <div className="flex-1 flex flex-col justify-center items-center text-center px-4 space-y-8 min-h-0">
+        <div className="space-y-4">
+          <p className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em]">{language === 'es' ? 'TU TURNO' : 'YOUR TURN'}</p>
+          <h2 className="text-5xl font-black text-white tracking-tighter transition-all animate-slide-up">{players[customInputIndex].name}</h2>
+          <p className="text-sm text-gray-500 font-bold max-w-[200px] mx-auto">{t.hideInput}</p>
         </div>
-        <div className="bg-slate-900/50 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/10 shadow-2xl space-y-8">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 mb-2"><Users size={24}/></div>
-            <p className="text-gray-400 text-sm font-bold text-center tracking-wide">{t.hideInput}</p>
-          </div>
-          <form onSubmit={e => { e.preventDefault(); const val = new FormData(e.currentTarget).get('word') as string; if(val) handleCustomWordSubmit(val); e.currentTarget.reset(); }}>
-            <input name="word" autoFocus autoComplete="off" className="w-full bg-black/40 border-b-2 border-white/10 focus:border-indigo-500 text-center text-3xl font-black text-white py-6 transition-all outline-none" placeholder="..." />
-            <Button fullWidth type="submit" className="text-lg py-5 mt-10 !rounded-2xl shadow-indigo-500/20">{t.submitPass}</Button>
-          </form>
-        </div>
+        <form className="w-full space-y-8" onSubmit={e => { e.preventDefault(); const val = new FormData(e.currentTarget).get('word') as string; if(val) handleCustomWordSubmit(val); e.currentTarget.reset(); }}>
+          <input name="word" autoFocus autoComplete="off" className="w-full bg-transparent border-b-2 border-white/10 focus:border-indigo-500 text-center text-2xl font-black text-white py-4 outline-none transition-all placeholder:text-gray-800" placeholder={language === 'es' ? 'Escribe aquí...' : 'Type here...'} />
+          <Button fullWidth type="submit" className="!rounded-2xl py-4.5 text-base">{t.submitPass}</Button>
+        </form>
       </div>
+    </div>
   );
 
   const renderDistribute = () => {
     const player = players[currentPlayerIndex];
     const isImpostor = impostorIds.includes(player.id);
-    const isSongsMode = gameMode === GameMode.SONGS;
+    const showSpecificWord = (gameMode === GameMode.SONGS || gameMode === GameMode.UNDERCOVER);
+    const word = (isImpostor && showSpecificWord) ? secretWordB : secretWord;
     
-    const showImpostorIdentity = isImpostor && !isSongsMode;
-    const wordToDisplay = (isImpostor && isSongsMode) ? secretWordB : secretWord;
-
-    const cardBackContent = (
-      <div className="flex flex-col items-center justify-center h-full space-y-8 animate-fade-in w-full">
-        {showImpostorIdentity ? (
-          <>
-            <div className="w-24 h-24 bg-red-500/10 rounded-[2rem] flex items-center justify-center text-red-500 border border-red-500/20 shadow-xl"><EyeOff size={48} strokeWidth={1.5} /></div>
-            <div className="space-y-2">
-                <h2 className="text-4xl font-black text-red-500 uppercase tracking-[0.2em]">{t.impostorRole}</h2>
-                <p className="text-gray-400 text-sm font-bold opacity-60 uppercase tracking-widest">{t.impostorDesc}</p>
-            </div>
-            <div className="px-6 py-2.5 bg-red-500/10 rounded-full border border-red-500/20 text-red-400 text-[10px] font-black tracking-widest animate-pulse">{t.blendIn}</div>
-          </>
-        ) : (
-          <>
-            <div className="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-xl"><ShieldCheck size={48} strokeWidth={1.5} /></div>
-            <div className="space-y-1">
-                <h3 className="text-gray-500 font-black uppercase text-[10px] tracking-[0.3em]">{t.secretWordIs}</h3>
-                <div className="h-0.5 w-8 bg-indigo-500/50 mx-auto rounded-full"></div>
-            </div>
-            <div className="w-full py-4"><h2 className="text-3xl font-black text-white break-words leading-tight">{wordToDisplay}</h2></div>
-            <div className="px-6 py-2.5 bg-indigo-500/10 rounded-full border border-indigo-500/20 text-indigo-400 text-[10px] font-black tracking-widest">{t.findImpostor}</div>
-          </>
-        )}
-      </div>
-    );
-
-    const cardFrontContent = (
-        <div className="flex flex-col items-center gap-8">
-            <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 shadow-inner">
-                <Fingerprint size={100} className="text-white/40" strokeWidth={1}/>
-            </div>
-            <div className="text-center space-y-2">
-                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] opacity-80">Security Protocol</p>
-                <h3 className="text-3xl font-black text-white leading-tight px-4">{transitionNextName ? t.passPhone(transitionNextName) : t.passPhone(player.name)}</h3>
-            </div>
-        </div>
-    );
-
     return (
-      <div className="flex flex-col items-center justify-center min-h-[100dvh] w-full pt-10 pb-16">
-        <div className="w-full flex justify-between items-center mb-8 max-w-[320px] px-2">
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">{t.playerCount(currentPlayerIndex + 1, players.length)}</p>
+      <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
+        <div className="flex justify-between items-center h-12 px-2 shrink-0">
+          <p className="text-gray-500 text-[8px] font-black uppercase tracking-widest">{t.playerCount(currentPlayerIndex + 1, players.length)}</p>
+          {!hasPeeked && <button onClick={handleBack} className="p-2 bg-white/5 rounded-full text-gray-400 active:scale-90"><ArrowLeft size={16}/></button>}
+        </div>
+        <div className="flex-1 flex flex-col justify-center items-center py-2 min-h-0">
+          <Card onReveal={() => setHasPeeked(true)} isResetting={!!transitionNextName} frontContent={
+            <div className="flex flex-col items-center gap-5">
+              <div className="p-6 bg-white/5 rounded-full border border-white/5 shadow-inner"><Fingerprint size={60} className="text-white/10" strokeWidth={1}/></div>
+              <h3 className="text-xl font-black text-white leading-tight px-4 text-center">{transitionNextName ? t.passPhone(transitionNextName) : t.passPhone(player.name)}</h3>
             </div>
-            {!hasPeeked && <ElegantBackButton />}
+          } backContent={
+            <div className="flex flex-col items-center justify-center h-full space-y-4">
+              {(isImpostor && !showSpecificWord) ? (
+                <>
+                  <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/20 text-red-500"><EyeOff size={32} /></div>
+                  <h2 className="text-2xl font-black text-red-500 uppercase">{t.impostorRole}</h2>
+                  <p className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">{t.impostorDesc}</p>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400"><ShieldCheck size={32} /></div>
+                  <h3 className="text-gray-600 font-black uppercase text-[8px] tracking-widest">{t.secretWordIs}</h3>
+                  <div className="text-xl font-black text-white break-words leading-tight text-center px-2">{word}</div>
+                </>
+              )}
+            </div>
+          } />
         </div>
-        
-        <div className="mb-12 w-full flex justify-center scale-100 sm:scale-110">
-            <Card onReveal={() => setHasPeeked(true)} isResetting={!!transitionNextName} frontContent={cardFrontContent} backContent={cardBackContent} hintText={t.tapToReveal} />
-        </div>
-
-        <div className="h-20 w-full max-w-xs flex items-center justify-center px-4">
-            {hasPeeked && (
-                <Button fullWidth onClick={handleNextPlayer} className="animate-slide-up !rounded-2xl py-5 shadow-2xl shadow-indigo-500/20 border-white/10 text-lg">
-                    {currentPlayerIndex < players.length - 1 ? t.nextPlayer : t.startGame}
-                </Button>
-            )}
-        </div>
+        {hasPeeked && <div className="h-14 mt-2"><Button fullWidth onClick={handleNextPlayer} className="!rounded-xl py-3.5 text-sm animate-slide-up">{currentPlayerIndex < players.length - 1 ? t.nextPlayer : t.startGame}</Button></div>}
       </div>
     );
   };
 
-  const renderPlaying = () => (
-      <div className="max-w-md mx-auto w-full text-center space-y-12 animate-slide-up min-h-[100dvh] flex flex-col justify-center items-center pb-20">
-          <CircularTimer timeLeft={timeLeft} totalTime={ROUND_TIME_SECONDS} />
-          
-          <div className="space-y-3">
-              <h2 className="text-5xl font-black text-white tracking-tight">{t.discuss}</h2>
-              <div className="h-1.5 w-16 bg-gradient-to-r from-indigo-500 to-violet-600 mx-auto rounded-full"></div>
-          </div>
-
-          <div className="w-full max-w-xs relative group">
-            <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-            <div className="relative bg-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/5 flex flex-col items-center gap-4 shadow-2xl">
-                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-amber-400 shadow-inner">
-                    <Crown size={24} fill="currentColor"/>
-                </div>
-                <div className="space-y-1">
-                    <h3 className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em]">{t.firstPlayer}</h3>
-                    <div className="text-3xl font-black text-white">{players[startingPlayerIndex]?.name}</div>
-                </div>
-            </div>
-          </div>
-
-          <Button variant="danger" fullWidth onClick={() => setStage(GameStage.REVEAL)} className="py-6 text-xl !rounded-[2rem] shadow-2xl shadow-red-500/20 max-w-xs">{t.revealBtn(impostorCount)}</Button>
-      </div>
-  );
-
-  const renderReveal = () => (
-    <div className="max-w-md mx-auto w-full text-center space-y-10 animate-slide-up pt-12 pb-20 min-h-[100dvh] flex flex-col justify-center">
-        <div className="space-y-4">
-            <h2 className="text-4xl font-black text-white">{t.gameOver}</h2>
-            <div className="bg-slate-900/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"></div>
-                <p className="text-gray-500 font-black uppercase text-[10px] tracking-[0.4em] mb-6">{t.secretWas}</p>
-                <div className="text-3xl font-black text-indigo-400 mb-2">{secretWord}</div>
-                {gameMode === GameMode.SONGS && (
-                    <>
-                        <div className="text-gray-700 font-black text-sm my-3 uppercase tracking-widest">VS</div>
-                        <div className="text-3xl font-black text-red-400">{secretWordB}</div>
-                    </>
-                )}
-            </div>
-        </div>
-        
-        <div className="space-y-3 px-2">
-            {players.map((p, idx) => (
-                <div key={p.id} className={`flex items-center justify-between p-5 rounded-[1.5rem] border backdrop-blur-md animate-slide-up transition-all ${p.isImpostor ? 'bg-red-500/5 border-red-500/20' : 'bg-white/5 border-white/5'}`} style={{ animationDelay: `${idx * 100}ms` }}>
-                    <span className={`font-bold text-lg ${p.isImpostor ? 'text-red-400' : 'text-gray-300'}`}>{p.name}</span>
-                    {p.isImpostor ? (
-                        <div className="px-3 py-1 bg-red-500/20 rounded-lg border border-red-500/20">
-                            <span className="text-red-400 font-black uppercase tracking-widest text-[8px] flex items-center gap-1"><EyeOff size={10} /> {t.impostorRole}</span>
-                        </div>
-                    ) : (
-                        <span className="text-emerald-500/30 font-black text-[8px] uppercase tracking-widest">{t.crewmate}</span>
-                    )}
-                </div>
-            ))}
-        </div>
-        
-        <div className="px-4">
-            <Button fullWidth onClick={resetToSetup} className="py-5 flex items-center justify-center gap-3 !rounded-2xl text-lg shadow-xl"><RotateCcw size={22} /> {t.playAgain}</Button>
-        </div>
-    </div>
-  );
-
   return (
     <div className="h-[100dvh] text-gray-100 flex flex-col overflow-hidden relative">
-      <main className="flex-grow overflow-y-auto p-6 flex flex-col items-center custom-scrollbar z-10">
-        <div className="w-full max-w-md my-auto">
-            {stage === GameStage.SETUP && renderSetup()}
-            {stage === GameStage.MODE_SELECT && renderModeSelect()}
-            {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
-            {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
-            {stage === GameStage.LOADING_AI && (
-                <div className="text-center space-y-10 animate-pulse flex flex-col items-center justify-center h-[100dvh]">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse"></div>
-                        <Wand2 size={80} className="text-indigo-400 animate-bounce relative z-10" strokeWidth={1}/>
-                    </div>
-                    <div className="space-y-4">
-                        <p className="font-black text-indigo-300 uppercase tracking-[0.4em] text-xs">{t.summoning}</p>
-                        <div className="w-12 h-1 bg-white/10 mx-auto rounded-full overflow-hidden">
-                            <div className="w-full h-full bg-indigo-500 animate-[loading_1.5s_infinite]"></div>
-                        </div>
-                    </div>
-                    <ElegantBackButton />
+      <main className="flex-grow flex flex-col items-center z-10 h-full w-full">
+        {stage === GameStage.SETUP && renderSetup()}
+        {stage === GameStage.MODE_SELECT && renderModeSelect()}
+        {stage === GameStage.CATEGORY_SELECT && renderCategorySelect()}
+        {stage === GameStage.CUSTOM_INPUT && renderCustomInput()}
+        {stage === GameStage.LOADING_AI && (
+          <div className="text-center space-y-6 animate-pulse flex flex-col items-center justify-center h-full w-full">
+            <Zap size={48} className="text-amber-400 animate-bounce" />
+            <p className="font-black text-indigo-400 uppercase tracking-widest text-[9px]">{t.summoning}</p>
+            <div className="mt-4"><button onClick={handleBack} className="p-3 bg-white/5 rounded-full text-gray-400"><ArrowLeft size={16}/></button></div>
+          </div>
+        )}
+        {stage === GameStage.DISTRIBUTE && renderDistribute()}
+        {stage === GameStage.PLAYING && (
+          <div className="max-w-md mx-auto w-full h-full flex flex-col justify-center items-center px-6 space-y-8 animate-slide-up">
+            <div className="text-4xl font-black text-white font-mono tracking-tighter">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+            <div className="w-full bg-slate-900/40 p-5 rounded-2xl border border-white/5 text-center backdrop-blur-md">
+              <h3 className="text-indigo-400 text-[8px] font-black uppercase mb-2 tracking-[0.2em]">{t.firstPlayer}</h3>
+              <div className="text-2xl font-black text-white">{players[startingPlayerIndex]?.name}</div>
+            </div>
+            <Button variant="danger" fullWidth onClick={() => { vibrate(); setStage(GameStage.REVEAL); }} className="py-4 !rounded-xl shadow-red-500/20">{t.revealBtn(impostorCount)}</Button>
+            <button onClick={handleBack} className="text-gray-600 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors">{t.back}</button>
+          </div>
+        )}
+        {stage === GameStage.REVEAL && (
+          <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
+            <GenericNavbar />
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+              <div className="bg-slate-900/40 p-6 rounded-[1.5rem] border border-white/5 text-center mb-4">
+                <p className="text-gray-600 font-black uppercase text-[8px] mb-3 tracking-widest">{t.secretWas}</p>
+                <div className="text-2xl font-black text-indigo-400">{secretWord}</div>
+                {secretWordB && <div className="text-red-400 mt-2 font-black text-lg">vs {secretWordB}</div>}
+              </div>
+              {players.map(p => (
+                <div key={p.id} className={`flex justify-between items-center p-3 rounded-xl border ${p.isImpostor ? 'bg-red-500/5 border-red-500/20 text-red-400' : 'bg-white/5 border-white/5 text-gray-400'}`}>
+                  <span className="font-bold text-xs">{p.name}</span>
+                  <span className="text-[7px] font-black uppercase tracking-widest">{p.isImpostor ? t.impostorRole : t.crewmate}</span>
                 </div>
-            )}
-            {stage === GameStage.DISTRIBUTE && renderDistribute()}
-            {stage === GameStage.PLAYING && renderPlaying()}
-            {stage === GameStage.REVEAL && renderReveal()}
-        </div>
+              ))}
+            </div>
+            <div className="pt-4"><Button fullWidth onClick={handleBack} className="py-4 !rounded-xl"><RotateCcw size={16} className="inline mr-2"/> {t.playAgain}</Button></div>
+          </div>
+        )}
       </main>
-      <footer className="shrink-0 p-6 text-center z-10 relative pointer-events-none">
-        <p className="text-[10px] font-black tracking-[0.3em] uppercase opacity-20">© {new Date().getFullYear()} Lucas Pignataro</p>
+      <footer className="shrink-0 p-3 text-center z-10 relative bg-black/50 border-t border-white/5 backdrop-blur-xl">
+        <p className="text-[8px] font-black tracking-widest uppercase opacity-20">© {new Date().getFullYear()} Lucas Pignataro</p>
       </footer>
     </div>
   );

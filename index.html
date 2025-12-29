@@ -2,34 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Updated Vector Favicon (Hat and Glasses) -->
     <link rel="icon" href="/icon-192.png?v=5">
-    
-    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-    
-    <!-- iOS Support -->
     <link rel="apple-touch-icon" href="/icon-192.png?v=5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Impostor">
-    
-    <!-- Mobile Chrome/Safari Theme Color (Matches game background) -->
-    <meta name="theme-color" content="#0f172a">
-    
-    <!-- Social Meta Tags -->
+    <meta name="theme-color" content="#0d111a">
     <meta name="description" content="Juego impostor hecho por mi." />
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Impostor</title>
     
-    <!-- Google Fonts: Inter for professional typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <script>
-      // CRITICAL FIX FOR VERCEL/PRODUCTION:
       window.process = window.process || {};
       window.process.env = window.process.env || {};
       window.process.cwd = window.process.cwd || function() { return '/'; };
@@ -42,49 +30,21 @@
       tailwind.config = {
         theme: {
           extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-              game: {
-                dark: '#0f172a', // Slate 900
-                card: 'rgba(30, 41, 59, 0.7)', // Glassy Slate
-                primary: '#6366f1', // Indigo 500
-                accent: '#8b5cf6', // Violet 500
-                danger: '#ef4444', // Red 500
-                success: '#10b981', // Emerald 500
-              }
-            },
-            transitionTimingFunction: {
-              'card': 'cubic-bezier(0.4, 0.0, 0.2, 1)', 
-            },
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
             animation: {
-              'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
-              'bounce-slow': 'bounce 3s infinite',
-              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'blob': 'blob 7s infinite',
+              'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
               'scan': 'scan 3s linear infinite',
             },
             keyframes: {
               slideUp: {
-                '0%': { opacity: '0', transform: 'translateY(40px)' },
+                '0%': { opacity: '0', transform: 'translateY(15px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              blob: {
-                "0%": { transform: "translate(0px, 0px) scale(1)" },
-                "33%": { transform: "translate(30px, -50px) scale(1.1)" },
-                "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
-                "100%": { transform: "translate(0px, 0px) scale(1)" }
               },
               scan: {
                 "0%": { top: "0%", opacity: "0" },
                 "15%": { opacity: "1" },
                 "85%": { opacity: "1" },
                 "100%": { top: "100%", opacity: "0" }
-              },
-              loading: {
-                "0%": { transform: "translateX(-100%)" },
-                "100%": { transform: "translateX(100%)" }
               }
             }
           }
@@ -92,53 +52,33 @@
       }
     </script>
     <style>
+      :root {
+        --app-bg: #0d111a;
+      }
       body {
-        background-color: #0f172a;
+        background-color: var(--app-bg);
         color: #e2e8f0;
         font-family: 'Inter', sans-serif;
         overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
         overflow: hidden;
+        height: 100dvh;
+        width: 100vw;
       }
       
-      /* Dynamic Background Mesh */
-      .bg-mesh-gradient {
+      .perspective-1000 { perspective: 1000px; }
+      .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+      
+      /* Subtle noise texture */
+      body::before {
+        content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -1;
-        overflow: hidden;
-        background: #0f172a;
-      }
-      .mesh-orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.3;
-        animation: blob 10s infinite;
-      }
-      .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; animation-delay: 0s; }
-      .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #7c3aed; animation-delay: 2s; }
-      .orb-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #db2777; opacity: 0.1; animation-delay: 4s; }
-
-      .perspective-1000 {
-        perspective: 1000px;
-      }
-      /* Custom scrollbar */
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent; 
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.1); 
-        border-radius: 10px;
-      }
-      .animate-bounce-slow {
-        animation: bounce 3s infinite;
+        inset: 0;
+        background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+        opacity: 0.03;
+        z-index: 100;
+        pointer-events: none;
       }
     </style>
   <script type="importmap">
@@ -154,29 +94,7 @@
 </script>
 </head>
   <body>
-    <!-- Background Animation Layer -->
-    <div class="bg-mesh-gradient">
-      <div class="mesh-orb orb-1"></div>
-      <div class="mesh-orb orb-2"></div>
-      <div class="mesh-orb orb-3"></div>
-    </div>
-
     <div id="root"></div>
-    
     <script type="module" src="/index.tsx"></script>
-    
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('SW registered');
-            })
-            .catch(registrationError => {
-              console.log('SW registration failed');
-            });
-        });
-      }
-    </script>
   </body>
 </html>
