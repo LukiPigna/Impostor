@@ -4,49 +4,57 @@ interface LogoProps {
   className?: string;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = "w-48 h-auto" }) => {
+export const Logo: React.FC<LogoProps> = ({ className = "w-32 h-32" }) => {
   return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 240 200" 
-      className={className}
-      aria-label="Impostor Logo"
-    >
-      <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{stopColor:'#7aa2f7', stopOpacity:1}} />
-          <stop offset="100%" style={{stopColor:'#bb9af7', stopOpacity:1}} />
-        </linearGradient>
-      </defs>
+    <div className={`relative flex items-center justify-center ${className} group`}>
+      {/* Resplandor de fondo difuso */}
+      <div className="absolute inset-0 bg-indigo-500/10 blur-[40px] rounded-full scale-150 animate-pulse duration-[4000ms]" />
       
-      {/* Icon Graphic - Recentered for width 240 (Center X = 120) */}
-      <g transform="translate(30, 0)">
-        {/* Hat */}
-        <path d="M70 20 L110 20 L120 50 L60 50 Z" fill="#7aa2f7" />
-        <rect x="50" y="50" width="80" height="10" rx="2" fill="#7aa2f7" />
-        
-        {/* Glasses */}
-        <circle cx="70" cy="80" r="18" fill="#1a1b26" stroke="url(#grad1)" strokeWidth="6" />
-        <circle cx="110" cy="80" r="18" fill="#1a1b26" stroke="url(#grad1)" strokeWidth="6" />
-        <line x1="88" y1="80" x2="92" y2="80" stroke="url(#grad1)" strokeWidth="4" />
-        
-        {/* Collar/Suit */}
-        <path d="M50 110 Q90 140 130 110 L130 140 L50 140 Z" fill="#24283b" opacity="0.8" />
-      </g>
-
-      {/* Text - Centered at 120 */}
-      <text 
-        x="120" 
-        y="185" 
-        fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" 
-        fontWeight="900" 
-        fontSize="40" 
-        fill="url(#grad1)" 
-        letterSpacing="2"
-        textAnchor="middle"
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 100 100" 
+        className="w-full h-full drop-shadow-[0_0_20px_rgba(122,162,247,0.4)] animate-bounce duration-[6000ms] ease-in-out"
+        style={{ animationIterationCount: 'infinite' }}
+        aria-hidden="true"
       >
-        IMPOSTOR
-      </text>
-    </svg>
+        <defs>
+          <linearGradient id="hatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{stopColor:'#7aa2f7', stopOpacity:0.9}} />
+            <stop offset="100%" style={{stopColor:'#bb9af7', stopOpacity:0.8}} />
+          </linearGradient>
+          <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{stopColor:'#1a1b26', stopOpacity:1}} />
+            <stop offset="100%" style={{stopColor:'#24283b', stopOpacity:1}} />
+          </linearGradient>
+          <filter id="softGlow">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        
+        <g transform="translate(0, 5)">
+          {/* Sombrero - Bordes suavizados con gradiente */}
+          <path 
+            d="M32 35 L68 35 L76 55 L24 55 Z" 
+            fill="url(#hatGrad)" 
+            className="filter-[url(#softGlow)]"
+          />
+          <rect x="18" y="55" width="64" height="6" rx="3" fill="url(#hatGrad)" />
+          
+          {/* Gafas - Círculos oscuros con borde brillante muy fino */}
+          <circle cx="36" cy="78" r="14" fill="url(#glassGrad)" stroke="#7aa2f7" strokeWidth="0.5" strokeOpacity="0.3" />
+          <circle cx="64" cy="78" r="14" fill="url(#glassGrad)" stroke="#7aa2f7" strokeWidth="0.5" strokeOpacity="0.3" />
+          
+          {/* Puente de las gafas */}
+          <path d="M50 78 Q50 78 50 78" stroke="#7aa2f7" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.5" />
+          <line x1="47" y1="78" x2="53" y2="78" stroke="#7aa2f7" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.4" />
+        </g>
+      </svg>
+
+      {/* Efecto de escaneo láser suave que pasa sobre el logo */}
+      <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none opacity-20">
+        <div className="absolute h-[2px] w-full bg-indigo-400 shadow-[0_0_15px_#7aa2f7] animate-scan top-0" />
+      </div>
+    </div>
   );
 };
