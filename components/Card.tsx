@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronUp, Fingerprint } from 'lucide-react';
+import { ChevronUp, ShieldCheck, Lock } from 'lucide-react';
 
 interface CardProps {
   onReveal?: () => void;
@@ -9,7 +9,7 @@ interface CardProps {
   hintText?: string;
 }
 
-export const Card: React.FC<CardProps> = ({ onReveal, frontContent, backContent, isResetting, hintText = "SLIDE UP" }) => {
+export const Card: React.FC<CardProps> = ({ onReveal, frontContent, backContent, isResetting, hintText = "SLIDE TO REVEAL" }) => {
   const [offsetY, setOffsetY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef<number>(0);
@@ -24,10 +24,6 @@ export const Card: React.FC<CardProps> = ({ onReveal, frontContent, backContent,
     }
   }, [isResetting]);
 
-  const triggerHaptic = () => {
-    if (navigator.vibrate) navigator.vibrate(10);
-  };
-
   const handleStart = (y: number) => {
     setIsDragging(true);
     startY.current = y;
@@ -37,85 +33,100 @@ export const Card: React.FC<CardProps> = ({ onReveal, frontContent, backContent,
   const handleMove = (y: number) => {
     if (!isDragging) return;
     const deltaY = y - startY.current;
-    // Physics: Resistance
-    let newOffset = Math.max(-350, Math.min(0, currentY.current + deltaY));
+    // Physics: Resistance and max pull
+    let newOffset = Math.max(-380, Math.min(0, currentY.current + deltaY));
     setOffsetY(newOffset);
 
-    // Haptic feedback when "unlocked"
-    if (newOffset < -120 && !hasVibrated.current) {
-        if (navigator.vibrate) navigator.vibrate(20);
+    // Haptic feedback when threshold crossed
+    if (newOffset < -140 && !hasVibrated.current) {
+        if (navigator.vibrate) navigator.vibrate([15]);
         hasVibrated.current = true;
         if (onReveal) onReveal();
     }
     
-    // Reset haptic trigger if user slides back down
-    if (newOffset > -100) {
+    if (newOffset > -120) {
         hasVibrated.current = false;
     }
   };
 
   const handleEnd = () => {
     setIsDragging(false);
+    // Smooth snap back is handled by CSS transition
     setOffsetY(0);
   };
 
-  // Events
   const onMouseDown = (e: React.MouseEvent) => handleStart(e.clientY);
   const onMouseMove = (e: React.MouseEvent) => handleMove(e.clientY);
   const onTouchStart = (e: React.TouchEvent) => handleStart(e.touches[0].clientY);
   const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientY);
 
-  const dragPercentage = Math.min(1, Math.abs(offsetY) / 200);
+  const dragPercentage = Math.min(1, Math.abs(offsetY) / 300);
 
   return (
     <div 
-      className="relative w-72 h-[420px] mx-auto select-none perspective-1000"
+      className="relative w-80 h-[460px] mx-auto select-none perspective-1000"
       onMouseUp={handleEnd}
       onMouseLeave={handleEnd}
       onMouseMove={onMouseMove}
       onTouchEnd={handleEnd}
       onTouchMove={onTouchMove}
     >
-        {/* --- BACK LAYER (The Secret) --- */}
-        <div className="absolute inset-0 w-full h-full bg-slate-900/90 backdrop-blur-xl rounded-[2rem] border border-white/10 flex items-center justify-center p-6 text-center z-0 shadow-inner overflow-hidden">
-             {/* Subtle background pattern inside secret card */}
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent opacity-50" />
-             <div className="relative z-10 w-full">
+        {/* --- BACK LAYER (The Data) --- */}
+        <div className="absolute inset-0 w-full h-full bg-[#0a0f1e] rounded-[2.5rem] border border-white/5 flex items-center justify-center p-8 text-center z-0 shadow-2xl overflow-hidden">
+             {/* Dynamic background effect for the secret word */}
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(99,102,241,0.08),transparent_70%)]" />
+             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
+             
+             <div className="relative z-10 w-full flex flex-col items-center">
                 {backContent}
              </div>
         </div>
 
-        {/* --- FRONT LAYER (The Cover) --- */}
+        {/* --- FRONT LAYER (The Shield) --- */}
         <div 
-            className={`absolute inset-0 w-full h-full rounded-[2rem] z-10 flex flex-col items-center justify-between p-6 cursor-grab active:cursor-grabbing shadow-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 touch-none border border-white/10 ${!isDragging ? 'transition-transform duration-500 cubic-bezier(0.2, 0.8, 0.2, 1)' : ''}`}
+            className={`absolute inset-0 w-full h-full rounded-[2.5rem] z-10 flex flex-col items-center justify-between p-8 cursor-grab active:cursor-grabbing shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)] bg-slate-900 touch-none border border-white/10 overflow-hidden ${!isDragging ? 'transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1)' : ''}`}
             style={{ 
                 transform: `translateY(${offsetY}px)`,
-                boxShadow: `0 20px 50px -12px rgba(79, 70, 229, ${0.5 - dragPercentage * 0.4})`
+                backgroundColor: `rgb(${15 + dragPercentage * 10}, ${23 + dragPercentage * 10}, ${42 + dragPercentage * 10})`
             }}
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
         >
-            {/* Minimalist Top Notch */}
-            <div className="w-16 h-1.5 bg-black/20 rounded-full mt-1 backdrop-blur-sm"></div>
+            {/* Glossy Texture Layer */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/20 pointer-events-none" />
+            
+            {/* Top Security Badge Style */}
+            <div className="w-full flex justify-between items-start opacity-40">
+                <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/40" />
+                </div>
+                <div className="px-2 py-0.5 rounded-md border border-white/20 text-[8px] font-black tracking-widest text-white/40 uppercase">Encrypted</div>
+            </div>
 
-            {/* Content Container */}
+            {/* Main Content Area */}
             <div className="flex-1 flex flex-col items-center justify-center w-full relative">
-                 {frontContent}
-                 
-                 {/* Biometric Scan Effect */}
-                 <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden rounded-xl">
-                    <div className="w-full h-1 bg-blue-400/50 shadow-[0_0_15px_rgba(96,165,250,0.8)] animate-scan blur-[1px]"></div>
+                 <div className="relative mb-8 transform transition-transform duration-700" style={{ transform: `scale(${1 + dragPercentage * 0.05})` }}>
+                    <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 rounded-full animate-pulse-slow"></div>
+                    {frontContent}
                  </div>
+                 
+                 {/* Biometric Scanline */}
+                 <div className="absolute inset-x-0 h-[1px] bg-indigo-400/30 shadow-[0_0_15px_rgba(99,102,241,0.6)] animate-scan blur-[0.5px] pointer-events-none"></div>
             </div>
 
-            {/* Simple Bottom Indicator */}
-            <div className="flex flex-col items-center gap-2 text-white/80 mb-4 animate-bounce">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">{hintText}</span>
-                <ChevronUp size={24} className="opacity-80" />
+            {/* Bottom Interaction Area */}
+            <div className="flex flex-col items-center gap-4 w-full">
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                <div className="flex flex-col items-center gap-2 text-white/60">
+                    <ChevronUp size={24} className={`transition-transform duration-300 ${isDragging ? 'translate-y--2 opacity-100' : 'opacity-40 animate-bounce'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-80">{hintText}</span>
+                </div>
             </div>
 
-            {/* Shine reflection */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none rounded-[2rem]" />
+            {/* Corner Decorative Elements */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/5 m-4 rounded-tl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/5 m-4 rounded-br-xl" />
         </div>
     </div>
   );

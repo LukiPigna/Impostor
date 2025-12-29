@@ -60,10 +60,10 @@
             },
             animation: {
               'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
-              'bounce-slow': 'bounce 2s infinite',
+              'bounce-slow': 'bounce 3s infinite',
               'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
               'blob': 'blob 7s infinite',
-              'scan': 'scan 2s linear infinite',
+              'scan': 'scan 3s linear infinite',
             },
             keyframes: {
               slideUp: {
@@ -78,8 +78,13 @@
               },
               scan: {
                 "0%": { top: "0%", opacity: "0" },
-                "50%": { opacity: "1" },
+                "15%": { opacity: "1" },
+                "85%": { opacity: "1" },
                 "100%": { top: "100%", opacity: "0" }
+              },
+              loading: {
+                "0%": { transform: "translateX(-100%)" },
+                "100%": { transform: "translateX(100%)" }
               }
             }
           }
@@ -87,21 +92,13 @@
       }
     </script>
     <style>
-      html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden; /* Critical for locking the page */
-        position: fixed; /* Locks viewport on iOS */
-      }
-      
       body {
         background-color: #0f172a;
         color: #e2e8f0;
         font-family: 'Inter', sans-serif;
-        overscroll-behavior: none; /* Prevents rubber-banding */
+        overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
+        overflow: hidden;
       }
       
       /* Dynamic Background Mesh */
@@ -114,18 +111,17 @@
         z-index: -1;
         overflow: hidden;
         background: #0f172a;
-        pointer-events: none;
       }
       .mesh-orb {
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: 0.4;
+        opacity: 0.3;
         animation: blob 10s infinite;
       }
       .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; animation-delay: 0s; }
       .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #7c3aed; animation-delay: 2s; }
-      .orb-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #db2777; opacity: 0.2; animation-delay: 4s; }
+      .orb-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #db2777; opacity: 0.1; animation-delay: 4s; }
 
       .perspective-1000 {
         perspective: 1000px;
@@ -141,9 +137,9 @@
         background: rgba(255,255,255,0.1); 
         border-radius: 10px;
       }
-      .delay-100 { animation-delay: 100ms; }
-      .delay-200 { animation-delay: 200ms; }
-      .delay-300 { animation-delay: 300ms; }
+      .animate-bounce-slow {
+        animation: bounce 3s infinite;
+      }
     </style>
   <script type="importmap">
 {
@@ -174,10 +170,10 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-              console.log('SW registered: ', registration);
+              console.log('SW registered');
             })
             .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
+              console.log('SW registration failed');
             });
         });
       }
