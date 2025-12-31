@@ -25,11 +25,11 @@ export enum GameMode {
 }
 
 export type Category = 
-  | 'INTERNET' 
-  | 'VILLAINS' 
-  | 'NOSTALGIA' 
-  | 'LEGENDS' 
-  | 'ANIME' 
-  | 'GADGETS';
+  | 'ANIMALS' 
+  | 'FOOD' 
+  | 'MOVIES' 
+  | 'CITIES' 
+  | 'OBJECTS' 
+  | 'JOBS';
 
 export type SupportedLanguage = 'en' | 'es';

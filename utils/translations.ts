@@ -32,12 +32,12 @@ export const translations: Record<SupportedLanguage, any> = {
     },
     categories: {
       title: "SELECT CATEGORY",
-      INTERNET: "Internet Culture",
-      VILLAINS: "Iconic Villains",
-      NOSTALGIA: "90s/00s Nostalgia",
-      LEGENDS: "Sports Legends",
-      ANIME: "Anime & Manga",
-      GADGETS: "Tech & Gadgets"
+      ANIMALS: "Animals",
+      FOOD: "Food",
+      MOVIES: "Movies",
+      CITIES: "Cities",
+      OBJECTS: "Objects",
+      JOBS: "Jobs"
     },
     back: "Back",
     passPhone: (name: string) => `Pass phone to ${name}`,
@@ -89,12 +89,12 @@ export const translations: Record<SupportedLanguage, any> = {
     },
     categories: {
       title: "ELIGE CATEGORÍA",
-      INTERNET: "Cultura Internet",
-      VILLAINS: "Villanos Icónicos",
-      NOSTALGIA: "Nostalgia 90s/00s",
-      LEGENDS: "Leyendas del Deporte",
-      ANIME: "Anime y Manga",
-      GADGETS: "Gadgets y Tech"
+      ANIMALS: "Animales",
+      FOOD: "Comida",
+      MOVIES: "Películas",
+      CITIES: "Ciudades",
+      OBJECTS: "Objetos",
+      JOBS: "Trabajos"
     },
     back: "Volver",
     passPhone: (name: string) => `Pasale el teléfono a ${name}`,

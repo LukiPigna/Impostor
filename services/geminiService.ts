@@ -10,20 +10,20 @@ const getSecureRandomItem = <T>(array: T[]): T | null => {
 
 const BACKUPS: Record<SupportedLanguage, Record<string, string[]>> = {
   en: {
-    INTERNET: ["Rickroll", "Doge", "TikTok", "MrBeast", "Skibidi Toilet", "Discord", "Fortnite", "Minecraft", "Trollface"],
-    VILLAINS: ["Joker", "Thanos", "Darth Vader", "Voldemort", "Scar", "Hannibal Lecter", "Cruella", "The Riddler", "Green Goblin"],
-    NOSTALGIA: ["Game Boy", "Tamagotchi", "Walkman", "Blockbuster", "MSN Messenger", "Pac-Man", "iPod Nano", "Cassette"],
-    LEGENDS: ["Michael Jordan", "Mike Tyson", "Muhammad Ali", "Messi", "Cristiano Ronaldo", "Serena Williams", "Tiger Woods"],
-    ANIME: ["Pikachu", "Goku", "Naruto", "Sailor Moon", "Luffy", "Spirited Away", "Death Note", "Totoro"],
-    GADGETS: ["iPhone 1", "Tesla", "VR Glasses", "Drone", "Apple Watch", "Hoverboard", "Nintendo Switch"]
+    ANIMALS: ["Lion", "Elephant", "Penguin", "Giraffe", "Kangaroo", "Panda", "Shark", "Eagle", "Wolf"],
+    FOOD: ["Pizza", "Hamburger", "Sushi", "Tacos", "Pasta", "Ice Cream", "Croissant", "Pancakes"],
+    MOVIES: ["Titanic", "Jurassic Park", "The Lion King", "Avatar", "Star Wars", "Harry Potter", "Inception", "The Matrix"],
+    CITIES: ["Paris", "New York", "Tokyo", "London", "Rome", "Barcelona", "Dubai", "Sydney", "Cairo"],
+    OBJECTS: ["Umbrella", "Bicycle", "Sunglasses", "Camera", "Guitar", "Backpack", "Watch", "Laptop"],
+    JOBS: ["Astronaut", "Firefighter", "Doctor", "Pilot", "Chef", "Artist", "Detective", "Farmer"]
   },
   es: {
-    INTERNET: ["Rickroll", "Doge", "TikTok", "Ibai Llanos", "Auronplay", "WhatsApp", "Minecraft", "Instagram", "Stickers"],
-    VILLAINS: ["El Guasón", "Thanos", "Darth Vader", "Voldemort", "Scar", "Cruella de Vil", "Lex Luthor", "Freezer"],
-    NOSTALGIA: ["Game Boy", "Tamagotchi", "Walkman", "Blockbuster", "Fotolog", "MSN Messenger", "Flippers", "Cassette"],
-    LEGENDS: ["Messi", "Maradona", "Manu Ginóbili", "Rafa Nadal", "Pau Gasol", "Sena", "Fangio", "Michael Jordan"],
-    ANIME: ["Pikachu", "Goku", "Naruto", "Caballeros del Zodiaco", "Luffy", "Oliver Atom", "Death Note", "Totoro"],
-    GADGETS: ["iPhone", "Tesla", "Lentes VR", "Dron", "Apple Watch", "Hoverboard", "PlayStation 5", "Alexa"]
+    ANIMALS: ["León", "Elefante", "Pingüino", "Jirafa", "Canguro", "Panda", "Tiburón", "Águila", "Lobo"],
+    FOOD: ["Pizza", "Hamburguesa", "Sushi", "Tacos", "Pasta", "Helado", "Medialuna", "Panqueques"],
+    MOVIES: ["Titanic", "Jurassic Park", "El Rey León", "Avatar", "Star Wars", "Harry Potter", "El Origen", "Matrix"],
+    CITIES: ["París", "Nueva York", "Tokio", "Londres", "Roma", "Barcelona", "Dubai", "Sídney", "El Cairo"],
+    OBJECTS: ["Paraguas", "Bicicleta", "Lentes de sol", "Cámara", "Guitarra", "Mochila", "Reloj", "Laptop"],
+    JOBS: ["Astronauta", "Bombero", "Médico", "Piloto", "Chef", "Artista", "Detective", "Granjero"]
   }
 };
 
@@ -46,7 +46,7 @@ export const generateWord = async (category: Category, language: SupportedLangua
     const seed = Math.random();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Category: ${category}. Language: ${language}. Seed: ${seed}. Give me ONE very specific and famous entity. Avoid generic terms. Just the name.`,
+      contents: `Category: ${category}. Language: ${language}. Seed: ${seed}. Give me ONE very specific and famous entity or common word for this category. Just the name.`,
       config: { temperature: 1.2, maxOutputTokens: 20 }
     });
     return response.text.trim().replace(/[".]/g, '') || getSecureRandomItem(BACKUPS[language][category]) || "Error";

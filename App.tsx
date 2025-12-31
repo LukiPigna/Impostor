@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Wand2, EyeOff, Crown, Minus, RotateCcw, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck, Languages, ChevronLeft, ChevronRight, Zap, Smartphone, Disc, User, Info, X } from 'lucide-react';
+import { Plus, Trash2, Wand2, EyeOff, Crown, Minus, RotateCcw, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck, Languages, ChevronLeft, ChevronRight, Zap, Smartphone, Disc, User, Info, X, MapPin, Briefcase, Film, Pizza, Dog } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord, generateDuel } from './services/geminiService';
 import { Button } from './components/Button';
@@ -28,7 +28,6 @@ const vibrate = (ms: number = 10) => {
 
 export default function App() {
   const [stage, setStage] = useState<GameStage>(GameStage.SETUP);
-  const [isIntroActive, setIsIntroActive] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [players, setPlayers] = useState<Player[]>(() => {
     const saved = localStorage.getItem('impostor_players');
@@ -57,11 +56,6 @@ export default function App() {
   const touchStartX = useRef<number | null>(null);
 
   const t = translations[language];
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsIntroActive(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('impostor_players', JSON.stringify(players));
@@ -177,116 +171,112 @@ export default function App() {
   );
 
   const renderSetup = () => (
-    <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-4 overflow-hidden relative">
-      <div className={`w-full flex justify-between items-center py-4 shrink-0 transition-all duration-1000 ease-in-out ${isIntroActive ? 'absolute inset-0 flex-col justify-center items-center z-50 bg-[#0d111a]' : 'relative'}`}>
-        <div className={`transition-all duration-1000 ease-in-out w-full flex justify-center ${isIntroActive ? 'scale-150' : 'scale-100'}`}>
-          <Logo className={`${isIntroActive ? 'w-48 h-48' : 'w-24 h-24'} transition-all duration-1000`} />
+    <div className="max-w-md mx-auto w-full h-full flex flex-col pb-4 px-4 overflow-hidden relative">
+      <div className="w-full flex justify-between items-center py-4 shrink-0 relative">
+        <div className="w-full flex justify-center">
+          <Logo className="w-24 h-24" />
         </div>
-        {!isIntroActive && (
-          <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="absolute right-0 p-2.5 bg-white/5 rounded-full border border-white/10 text-gray-400 active:scale-90 transition-all backdrop-blur-md">
-            <Languages size={18} />
-          </button>
-        )}
+        <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="absolute right-0 p-2.5 bg-white/5 rounded-full border border-white/10 text-gray-400 active:scale-90 transition-all backdrop-blur-md">
+          <Languages size={18} />
+        </button>
       </div>
       
-      {!isIntroActive && (
-        <div className="flex-1 flex flex-col min-h-0 animate-slide-up">
-          <div className="flex justify-between items-end mb-4 px-1">
-            <div>
-              <h2 className="text-xl font-black text-white tracking-tight">{language === 'es' ? 'Tu Escuadrón' : 'Your Squad'}</h2>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{players.length} / {MAX_PLAYERS} {language === 'es' ? 'Jugadores' : 'Players'}</p>
-            </div>
-            {players.length >= MIN_PLAYERS && (
-              <div className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest animate-pulse">
-                {language === 'es' ? 'Listos' : 'Ready'}
-              </div>
-            )}
+      <div className="flex-1 flex flex-col min-h-0 animate-slide-up">
+        <div className="flex justify-between items-end mb-4 px-1">
+          <div>
+            <h2 className="text-xl font-black text-white tracking-tight">{language === 'es' ? 'Tu Escuadrón' : 'Your Squad'}</h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{players.length} / {MAX_PLAYERS} {language === 'es' ? 'Jugadores' : 'Players'}</p>
           </div>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <User size={16} className="text-gray-500" />
-            </div>
-            <input 
-              type="text" 
-              value={newPlayerName} 
-              onChange={e => setNewPlayerName(e.target.value)} 
-              onKeyDown={e => {
-                if(e.key === 'Enter' && newPlayerName.trim() && players.length < MAX_PLAYERS) {
-                  vibrate();
-                  setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]);
-                  setNewPlayerName('');
-                }
-              }} 
-              placeholder={t.enterName} 
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-14 py-4 focus:outline-none focus:border-indigo-500/50 text-white text-base font-medium transition-all placeholder:text-gray-600 shadow-inner" 
-            />
-            <button 
-              onClick={() => {
-                if(newPlayerName.trim() && players.length < MAX_PLAYERS) {
-                  vibrate(); 
-                  setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]); 
-                  setNewPlayerName('');
-                }
-              }} 
-              disabled={!newPlayerName.trim() || players.length >= MAX_PLAYERS} 
-              className="absolute right-2 top-2 bottom-2 w-10 bg-indigo-500 hover:bg-indigo-600 disabled:bg-white/5 disabled:text-gray-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg"
-            >
-              <Plus size={20} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2 mb-4">
-            {players.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center opacity-20 py-12">
-                <div className="p-8 bg-white/5 rounded-full mb-4 border border-white/5">
-                  <Users size={48} strokeWidth={1}/>
-                </div>
-                <p className="text-xs font-black uppercase tracking-widest text-center">{t.noPlayers}</p>
-              </div>
-            ) : (
-              players.map((p, idx) => (
-                <div key={p.id} className="flex justify-between items-center bg-white/[0.03] backdrop-blur-sm p-3.5 rounded-2xl border border-white/5 animate-slide-up group" style={{ animationDelay: `${idx * 50}ms` }}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center border shadow-sm ${PLAYER_COLORS[idx % PLAYER_COLORS.length]}`}>
-                      <User size={18} />
-                    </div>
-                    <span className="font-bold text-gray-200 text-sm tracking-tight">{p.name}</span>
-                  </div>
-                  <button 
-                    onClick={() => { vibrate(); setPlayers(players.filter(x => x.id !== p.id)); }} 
-                    className="text-gray-700 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-xl transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
           {players.length >= MIN_PLAYERS && (
-            <div className="bg-black/40 backdrop-blur-xl p-4 rounded-3xl border border-white/5 flex items-center justify-between mb-4 shadow-2xl">
-              <div className="flex flex-col">
-                <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">{t.numImpostors}</span>
-                <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                   <span className="text-white font-black text-lg leading-none">{impostorCount}</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { vibrate(); setImpostorCount(Math.max(1, impostorCount - 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Minus size={16} /></button>
-                <button onClick={() => { vibrate(); setImpostorCount(Math.min(Math.floor(players.length/2), impostorCount + 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Plus size={16} /></button>
-              </div>
+            <div className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest animate-pulse">
+              {language === 'es' ? 'Listos' : 'Ready'}
             </div>
           )}
-
-          <div className="shrink-0">
-            <Button fullWidth onClick={() => { vibrate(); setStage(GameStage.MODE_SELECT); }} disabled={players.length < MIN_PLAYERS} className="py-4.5 !rounded-2xl text-base shadow-2xl shadow-indigo-500/20">
-              {players.length < MIN_PLAYERS ? t.needMore : t.continue}
-            </Button>
-          </div>
         </div>
-      )}
+
+        <div className="relative mb-6">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <User size={16} className="text-gray-500" />
+          </div>
+          <input 
+            type="text" 
+            value={newPlayerName} 
+            onChange={e => setNewPlayerName(e.target.value)} 
+            onKeyDown={e => {
+              if(e.key === 'Enter' && newPlayerName.trim() && players.length < MAX_PLAYERS) {
+                vibrate();
+                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]);
+                setNewPlayerName('');
+              }
+            }} 
+            placeholder={t.enterName} 
+            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-14 py-4 focus:outline-none focus:border-indigo-500/50 text-white text-base font-medium transition-all placeholder:text-gray-600 shadow-inner" 
+          />
+          <button 
+            onClick={() => {
+              if(newPlayerName.trim() && players.length < MAX_PLAYERS) {
+                vibrate(); 
+                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]); 
+                setNewPlayerName('');
+              }
+            }} 
+            disabled={!newPlayerName.trim() || players.length >= MAX_PLAYERS} 
+            className="absolute right-2 top-2 bottom-2 w-10 bg-indigo-500 hover:bg-indigo-600 disabled:bg-white/5 disabled:text-gray-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2 mb-4">
+          {players.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center opacity-20 py-12">
+              <div className="p-8 bg-white/5 rounded-full mb-4 border border-white/5">
+                <Users size={48} strokeWidth={1}/>
+              </div>
+              <p className="text-xs font-black uppercase tracking-widest text-center">{t.noPlayers}</p>
+            </div>
+          ) : (
+            players.map((p, idx) => (
+              <div key={p.id} className="flex justify-between items-center bg-white/[0.03] backdrop-blur-sm p-3.5 rounded-2xl border border-white/5 animate-slide-up group" style={{ animationDelay: `${idx * 50}ms` }}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border shadow-sm ${PLAYER_COLORS[idx % PLAYER_COLORS.length]}`}>
+                    <User size={18} />
+                  </div>
+                  <span className="font-bold text-gray-200 text-sm tracking-tight">{p.name}</span>
+                </div>
+                <button 
+                  onClick={() => { vibrate(); setPlayers(players.filter(x => x.id !== p.id)); }} 
+                  className="text-gray-700 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-xl transition-all"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {players.length >= MIN_PLAYERS && (
+          <div className="bg-black/40 backdrop-blur-xl p-4 rounded-3xl border border-white/5 flex items-center justify-between mb-4 shadow-2xl">
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest leading-none mb-1">{t.numImpostors}</span>
+              <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                 <span className="text-white font-black text-lg leading-none">{impostorCount}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { vibrate(); setImpostorCount(Math.max(1, impostorCount - 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Minus size={16} /></button>
+              <button onClick={() => { vibrate(); setImpostorCount(Math.min(Math.floor(players.length/2), impostorCount + 1)); }} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-90"><Plus size={16} /></button>
+            </div>
+          </div>
+        )}
+
+        <div className="shrink-0">
+          <Button fullWidth onClick={() => { vibrate(); setStage(GameStage.MODE_SELECT); }} disabled={players.length < MIN_PLAYERS} className="py-4.5 !rounded-2xl text-base shadow-2xl shadow-indigo-500/20">
+            {players.length < MIN_PLAYERS ? t.needMore : t.continue}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 
@@ -339,9 +329,9 @@ export default function App() {
                     ${normalizedDist === 1 ? 'translate-x-[65%] opacity-15 scale-90 z-10' : ''}`}
                 >
                   <div className={`p-12 bg-slate-900/40 backdrop-blur-3xl rounded-[3.5rem] border border-white/5 shadow-2xl mb-8 ${mode.color} active:scale-95 transition-transform`}>{mode.icon}</div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center gap-2 mb-2 w-full">
                     <h3 className="text-3xl font-black text-white tracking-tight leading-tight">{mode.label}</h3>
-                    <button onClick={(e) => { e.stopPropagation(); setShowHelp(true); vibrate(); }} className="text-gray-500 hover:text-indigo-400 p-1">
+                    <button onClick={(e) => { e.stopPropagation(); setShowHelp(true); vibrate(); }} className="text-gray-500 hover:text-indigo-400 p-1 flex items-center">
                       <Info size={20} />
                     </button>
                   </div>
@@ -367,12 +357,12 @@ export default function App() {
       <div className="flex-1 flex flex-col justify-center py-2">
         <div className="grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar pr-0.5">
           {[
-            { id: 'INTERNET', icon: <Smartphone size={22} />, label: t.categories.INTERNET, color: "text-blue-400" },
-            { id: 'VILLAINS', icon: <Ghost size={22} />, label: t.categories.VILLAINS, color: "text-red-400" },
-            { id: 'NOSTALGIA', icon: <RotateCcw size={22} />, label: t.categories.NOSTALGIA, color: "text-amber-400" },
-            { id: 'LEGENDS', icon: <Crown size={22} />, label: t.categories.LEGENDS, color: "text-emerald-400" },
-            { id: 'ANIME', icon: <Cat size={22} />, label: t.categories.ANIME, color: "text-purple-400" },
-            { id: 'GADGETS', icon: <Box size={22} />, label: t.categories.GADGETS, color: "text-sky-400" },
+            { id: 'ANIMALS', icon: <Dog size={22} />, label: t.categories.ANIMALS, color: "text-blue-400" },
+            { id: 'FOOD', icon: <Pizza size={22} />, label: t.categories.FOOD, color: "text-red-400" },
+            { id: 'MOVIES', icon: <Film size={22} />, label: t.categories.MOVIES, color: "text-amber-400" },
+            { id: 'CITIES', icon: <MapPin size={22} />, label: t.categories.CITIES, color: "text-emerald-400" },
+            { id: 'OBJECTS', icon: <Box size={22} />, label: t.categories.OBJECTS, color: "text-purple-400" },
+            { id: 'JOBS', icon: <Briefcase size={22} />, label: t.categories.JOBS, color: "text-sky-400" },
           ].map((cat) => (
             <button key={cat.id} onClick={() => { vibrate(); prepareGameLogic(GameMode.AI, cat.id as Category); }} className="bg-white/5 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95">
               <div className={cat.color}>{cat.icon}</div>
@@ -482,8 +472,10 @@ export default function App() {
         )}
         {stage === GameStage.REVEAL && (
           <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
-             <div className="w-full flex justify-center items-center py-2 px-2 shrink-0 h-24">
-               <Logo className="w-16 h-16" />
+             <div className="w-full flex justify-between items-center py-2 px-2 shrink-0 h-14">
+               <div className="flex-1"></div>
+               <Logo className="scale-75" />
+               <div className="flex-1"></div>
              </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-3">
               <div className="bg-slate-900/40 p-8 rounded-[2rem] border border-white/5 text-center mb-4">
