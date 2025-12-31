@@ -8,7 +8,7 @@ import { Logo } from './components/Logo';
 import { translations } from './utils/translations';
 
 const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 20;
+const MAX_PLAYERS = 25;
 const ROUND_TIME_SECONDS = 180;
 
 const PLAYER_COLORS = [
@@ -312,7 +312,11 @@ export default function App() {
     };
 
     return (
-      <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div 
+        className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden touch-none" 
+        onTouchStart={onTouchStart} 
+        onTouchEnd={onTouchEnd}
+      >
         {showHelp && <HelpModal mode={modes[modeIdx].id} />}
         <GenericNavbar title={t.chooseMode} />
         <div className="flex-1 flex flex-col justify-center items-center relative overflow-hidden">
@@ -455,7 +459,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-[100dvh] text-gray-100 flex flex-col overflow-hidden relative">
+    <div className="fixed inset-0 text-gray-100 flex flex-col overflow-hidden bg-[#0d111a]">
       <main className="flex-grow flex flex-col items-center z-10 h-full w-full">
         {stage === GameStage.SETUP && renderSetup()}
         {stage === GameStage.MODE_SELECT && renderModeSelect()}
