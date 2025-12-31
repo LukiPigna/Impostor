@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Wand2, EyeOff, Crown, Minus, RotateCcw, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck, Languages, ChevronLeft, ChevronRight, Zap, Smartphone, Disc, User, Info, X, MapPin, Briefcase, Film, Pizza, Dog } from 'lucide-react';
+import { Plus, Trash2, Wand2, EyeOff, Crown, Minus, RotateCcw, Box, Cat, Users, Ghost, Fingerprint, Music, ArrowLeft, ShieldCheck, Languages, ChevronLeft, ChevronRight, Zap, Smartphone, Disc, User, Info, X, MapPin, Briefcase, Film, Pizza, Dog, Trophy, Shirt, Globe, Tag, Smile, Music2 } from 'lucide-react';
 import { GameStage, GameMode, Player, SupportedLanguage, Category } from './types';
 import { generateWord, generateDuel } from './services/geminiService';
 import { Button } from './components/Button';
@@ -52,6 +52,7 @@ export default function App() {
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME_SECONDS);
   const [modeIdx, setModeIdx] = useState(0);
+  const [usedWords, setUsedWords] = useState<string[]>([]);
 
   const touchStartX = useRef<number | null>(null);
 
@@ -95,14 +96,16 @@ export default function App() {
 
     if (mode === GameMode.AI && category) {
       setStage(GameStage.LOADING_AI);
-      const word = await generateWord(category, language, []);
+      const word = await generateWord(category, language, usedWords);
       setSecretWord(word);
+      setUsedWords(prev => [...prev.slice(-40), word]);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.UNDERCOVER || mode === GameMode.SONGS) {
       setStage(GameStage.LOADING_AI);
-      const { wordA, wordB } = await generateDuel(mode === GameMode.SONGS ? 'SONGS' : 'UNDERCOVER', language);
+      const { wordA, wordB } = await generateDuel(mode === GameMode.SONGS ? 'SONGS' : 'UNDERCOVER', language, usedWords);
       setSecretWord(wordA);
       setSecretWordB(wordB);
+      setUsedWords(prev => [...prev.slice(-40), wordA, wordB]);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.AMONG_US) {
       setSecretWord(shuffled[Math.floor(Math.random() * shuffled.length)].name);
@@ -121,7 +124,8 @@ export default function App() {
     if (customInputIndex < players.length - 1) {
       setCustomInputIndex(prev => prev + 1);
     } else {
-      setSecretWord(newWords[Math.floor(Math.random() * newWords.length)]);
+      const selected = newWords[Math.floor(Math.random() * newWords.length)];
+      setSecretWord(selected);
       setStage(GameStage.DISTRIBUTE);
     }
   };
@@ -148,7 +152,7 @@ export default function App() {
         <ArrowLeft size={16} />
       </button>
       {title && <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 text-center flex-1 truncate px-2">{title}</span>}
-      <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="p-2 bg-white/5 rounded-full border border-white/5 text-gray-400 active:scale-90 transition-all">
+      <button onClick={() => { vibrate(); setLanguage(l => l === 'en' ? 'es' : 'en'); }} className="p-2 bg-white/5 rounded-full border border-white/10 text-gray-400 active:scale-90 transition-all">
         <Languages size={16} />
       </button>
     </div>
@@ -331,7 +335,7 @@ export default function App() {
                   <div className={`p-12 bg-slate-900/40 backdrop-blur-3xl rounded-[3.5rem] border border-white/5 shadow-2xl mb-8 ${mode.color} active:scale-95 transition-transform`}>{mode.icon}</div>
                   <div className="flex items-center justify-center gap-2 mb-2 w-full">
                     <h3 className="text-3xl font-black text-white tracking-tight leading-tight">{mode.label}</h3>
-                    <button onClick={(e) => { e.stopPropagation(); setShowHelp(true); vibrate(); }} className="text-gray-500 hover:text-indigo-400 p-1 flex items-center">
+                    <button onClick={(e) => { e.stopPropagation(); setShowHelp(true); vibrate(); }} className="text-gray-500 hover:text-indigo-400 p-1 flex items-center justify-center">
                       <Info size={20} />
                     </button>
                   </div>
@@ -354,8 +358,8 @@ export default function App() {
   const renderCategorySelect = () => (
     <div className="max-w-md mx-auto w-full h-full flex flex-col animate-slide-up pb-4 px-3 overflow-hidden">
       <GenericNavbar title={t.categories.title} />
-      <div className="flex-1 flex flex-col justify-center py-2">
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar pr-0.5">
+      <div className="flex-1 flex flex-col min-h-0 py-2">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar pr-0.5 pb-4">
           {[
             { id: 'ANIMALS', icon: <Dog size={22} />, label: t.categories.ANIMALS, color: "text-blue-400" },
             { id: 'FOOD', icon: <Pizza size={22} />, label: t.categories.FOOD, color: "text-red-400" },
@@ -363,6 +367,12 @@ export default function App() {
             { id: 'CITIES', icon: <MapPin size={22} />, label: t.categories.CITIES, color: "text-emerald-400" },
             { id: 'OBJECTS', icon: <Box size={22} />, label: t.categories.OBJECTS, color: "text-purple-400" },
             { id: 'JOBS', icon: <Briefcase size={22} />, label: t.categories.JOBS, color: "text-sky-400" },
+            { id: 'SPORTS', icon: <Trophy size={22} />, label: t.categories.SPORTS, color: "text-orange-400" },
+            { id: 'CLOTHING', icon: <Shirt size={22} />, label: t.categories.CLOTHING, color: "text-pink-400" },
+            { id: 'COUNTRIES', icon: <Globe size={22} />, label: t.categories.COUNTRIES, color: "text-cyan-400" },
+            { id: 'BRANDS', icon: <Tag size={22} />, label: t.categories.BRANDS, color: "text-yellow-400" },
+            { id: 'CARTOONS', icon: <Smile size={22} />, label: t.categories.CARTOONS, color: "text-lime-400" },
+            { id: 'INSTRUMENTS', icon: <Music2 size={22} />, label: t.categories.INSTRUMENTS, color: "text-indigo-400" },
           ].map((cat) => (
             <button key={cat.id} onClick={() => { vibrate(); prepareGameLogic(GameMode.AI, cat.id as Category); }} className="bg-white/5 backdrop-blur-xl border border-white/5 p-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95">
               <div className={cat.color}>{cat.icon}</div>

@@ -30,6 +30,12 @@ export type Category =
   | 'MOVIES' 
   | 'CITIES' 
   | 'OBJECTS' 
-  | 'JOBS';
+  | 'JOBS'
+  | 'SPORTS'
+  | 'CLOTHING'
+  | 'COUNTRIES'
+  | 'BRANDS'
+  | 'CARTOONS'
+  | 'INSTRUMENTS';
 
 export type SupportedLanguage = 'en' | 'es';

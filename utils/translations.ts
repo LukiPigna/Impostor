@@ -37,7 +37,13 @@ export const translations: Record<SupportedLanguage, any> = {
       MOVIES: "Movies",
       CITIES: "Cities",
       OBJECTS: "Objects",
-      JOBS: "Jobs"
+      JOBS: "Jobs",
+      SPORTS: "Sports",
+      CLOTHING: "Clothing",
+      COUNTRIES: "Countries",
+      BRANDS: "Brands",
+      CARTOONS: "Cartoons",
+      INSTRUMENTS: "Instruments"
     },
     back: "Back",
     passPhone: (name: string) => `Pass phone to ${name}`,
@@ -94,7 +100,13 @@ export const translations: Record<SupportedLanguage, any> = {
       MOVIES: "Películas",
       CITIES: "Ciudades",
       OBJECTS: "Objetos",
-      JOBS: "Trabajos"
+      JOBS: "Trabajos",
+      SPORTS: "Deportes",
+      CLOTHING: "Ropa",
+      COUNTRIES: "Países",
+      BRANDS: "Marcas",
+      CARTOONS: "Dibujos",
+      INSTRUMENTS: "Instrumentos"
     },
     back: "Volver",
     passPhone: (name: string) => `Pasale el teléfono a ${name}`,
