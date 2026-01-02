@@ -81,14 +81,21 @@ export default function App() {
   };
 
   const prepareGameLogic = async (mode: GameMode, category?: Category) => {
-    const shuffled = [...players].sort(() => Math.random() - 0.5);
-    const selectedIndices = [...Array(shuffled.length).keys()].sort(() => Math.random() - 0.5).slice(0, impostorCount);
-    const newImpostorIds = selectedIndices.map(idx => shuffled[idx].id);
+    // IMPORTANTE: Respetamos el orden original de 'players' para el flujo de pasar el teléfono
+    const currentOrder = [...players];
+    
+    // Elegimos índices al azar para los impostores sin mezclar el arreglo original
+    const indices = [...Array(currentOrder.length).keys()];
+    const selectedIndices = indices.sort(() => Math.random() - 0.5).slice(0, impostorCount);
+    const newImpostorIds = selectedIndices.map(idx => currentOrder[idx].id);
     
     setImpostorIds(newImpostorIds);
     setGameMode(mode);
-    setPlayers(shuffled.map(p => ({ ...p, isImpostor: newImpostorIds.includes(p.id) })));
-    setStartingPlayerIndex(Math.floor(Math.random() * shuffled.length));
+    setPlayers(currentOrder.map(p => ({ ...p, isImpostor: newImpostorIds.includes(p.id) })));
+    
+    // El jugador que arranca la ronda de debate puede seguir siendo aleatorio para variedad
+    setStartingPlayerIndex(Math.floor(Math.random() * currentOrder.length));
+    
     setCurrentPlayerIndex(0);
     setHasPeeked(false);
     setSecretWord('');
@@ -108,7 +115,7 @@ export default function App() {
       setUsedWords(prev => [...prev.slice(-40), wordA, wordB]);
       setStage(GameStage.DISTRIBUTE);
     } else if (mode === GameMode.AMONG_US) {
-      setSecretWord(shuffled[Math.floor(Math.random() * shuffled.length)].name);
+      setSecretWord(currentOrder[Math.floor(Math.random() * currentOrder.length)].name);
       setStage(GameStage.DISTRIBUTE);
     } else {
       setCustomWords([]);
@@ -209,7 +216,8 @@ export default function App() {
             onKeyDown={e => {
               if(e.key === 'Enter' && newPlayerName.trim() && players.length < MAX_PLAYERS) {
                 vibrate();
-                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]);
+                // IMPORTANTE: Agregamos al final para que el orden sea el de ingreso
+                setPlayers([...players, {id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}]);
                 setNewPlayerName('');
               }
             }} 
@@ -220,7 +228,7 @@ export default function App() {
             onClick={() => {
               if(newPlayerName.trim() && players.length < MAX_PLAYERS) {
                 vibrate(); 
-                setPlayers([{id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}, ...players]); 
+                setPlayers([...players, {id: crypto.randomUUID(), name: newPlayerName.trim(), isImpostor: false}]); 
                 setNewPlayerName('');
               }
             }} 
